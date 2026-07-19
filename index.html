@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>R2R Renewal Desk</title>
+<meta name="description" content="Annual renewal ledger and invoice generator for R2R Tutorials.">
+<meta name="theme-color" content="#04080f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Renewal Desk">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04080f; --panel:#0a121e; --panel2:#0e1826;
+  --line:#182437; --ink:#e8eef7; --dim:#8899b0; --faint:#5a6d87;
+  --amber:#f0a500; --amber-soft:rgba(240,165,0,.12);
+  --green:#2fbf71; --red:#e5484d; --blue:#4c8dff;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'DM Sans',system-ui,sans-serif;
+  padding-bottom:96px; line-height:1.5;
+}
+h1,h2,h3{font-family:'Syne',sans-serif;margin:0;letter-spacing:-.02em}
+.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:920px;margin:0 auto;
+  padding:0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right))}
+
+/* ---------- header ---------- */
+header{padding:26px 0 18px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{font-size:22px;font-weight:800}
+.brand span{color:var(--amber);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.sub{color:var(--faint);font-size:13px;margin-top:6px}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+@media(min-width:640px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.stat .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-family:'JetBrains Mono',monospace}
+.stat .v{font-family:'Syne',sans-serif;font-size:21px;font-weight:700;margin-top:6px}
+.stat.hot .v{color:var(--amber)}
+
+/* ---------- cards ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.name{font-family:'Syne',sans-serif;font-weight:700;font-size:16px}
+.meta{color:var(--faint);font-size:12px;margin-top:3px}
+.amt{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:15px;white-space:nowrap}
+.pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;
+  padding:3px 8px;border-radius:999px;text-transform:uppercase;margin-top:8px}
+.p-over{background:rgba(229,72,77,.14);color:#ff8f92;border:1px solid rgba(229,72,77,.35)}
+.p-soon{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(240,165,0,.35)}
+.p-ok{background:rgba(47,191,113,.1);color:#6fd99b;border:1px solid rgba(47,191,113,.28)}
+.acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;
+  border-radius:9px;padding:8px 13px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+  transition:.15s}
+button:hover{border-color:var(--amber);color:var(--amber)}
+button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+button.primary{background:var(--amber);color:#04080f;border-color:var(--amber);font-weight:700}
+button.primary:hover{filter:brightness(1.12);color:#04080f}
+button.ghost{background:transparent;color:var(--faint)}
+button.danger:hover{border-color:var(--red);color:var(--red)}
+
+/* ---------- nav ---------- */
+nav{position:fixed;left:0;right:0;bottom:0;background:rgba(6,11,19,.94);
+  backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:40}
+nav button{flex:1;background:none;border:none;color:var(--faint);font-size:11px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;font-family:'JetBrains Mono',monospace;
+  letter-spacing:.06em;text-transform:uppercase}
+nav button.on{color:var(--amber)}
+nav button:hover{color:var(--amber)}
+nav .dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0}
+nav button.on .dot{opacity:1}
+
+.view{display:none}.view.on{display:block}
+.sec-title{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
+  font-family:'JetBrains Mono',monospace;margin:22px 0 10px}
+
+/* ---------- forms ---------- */
+label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);font-family:'JetBrains Mono',monospace;margin:12px 0 5px}
+input,textarea,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
+  border-radius:9px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--amber)}
+.grid2{display:grid;gap:0 14px}
+@media(min-width:560px){.grid2{grid-template-columns:1fr 1fr}}
+
+/* ---------- modal ---------- */
+.scrim{position:fixed;inset:0;background:rgba(2,5,10,.78);z-index:50;display:none;
+  overflow:auto;padding:20px 12px 40px}
+.scrim.on{display:block}
+.modal{max-width:760px;margin:0 auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:20px}
+
+/* ---------- invoice ---------- */
+.inv{background:#fff;color:#14181f;border-radius:10px;padding:34px;font-family:'DM Sans',sans-serif}
+.inv h2{font-size:26px;letter-spacing:-.02em}
+.inv .accent{color:#b57a00}
+.inv-head{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  border-bottom:2px solid #14181f;padding-bottom:16px;margin-bottom:22px}
+.inv-lbl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#7b8797;
+  font-family:'JetBrains Mono',monospace;margin-bottom:3px}
+.inv table{width:100%;border-collapse:collapse;margin:20px 0}
+.inv th{text-align:left;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#7b8797;
+  font-family:'JetBrains Mono',monospace;border-bottom:1px solid #d6dbe3;padding:0 0 8px}
+.inv td{padding:14px 0;border-bottom:1px solid #eceff4;font-size:14px;vertical-align:top}
+.inv .num{text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.inv .total td{border:none;padding-top:16px;font-weight:700;font-size:17px;font-family:'Syne',sans-serif}
+.inv-foot{margin-top:26px;padding-top:16px;border-top:1px solid #d6dbe3;font-size:12px;color:#5b6675}
+.words{font-size:12px;color:#5b6675;font-style:italic;margin-top:4px}
+
+.empty{text-align:center;color:var(--faint);padding:44px 16px;font-size:14px}
+.hist{font-size:12px;color:var(--dim);font-family:'JetBrains Mono',monospace;
+  padding:6px 0;border-bottom:1px solid var(--line)}
+.note{background:var(--amber-soft);border:1px solid rgba(240,165,0,.3);border-radius:10px;
+  padding:11px 13px;font-size:12.5px;color:#e3c78a;margin-bottom:16px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:104px;background:var(--amber);
+  color:#04080f;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;z-index:80;
+  opacity:0;pointer-events:none;transition:.25s}
+.toast.on{opacity:1}
+
+@media print{
+  body{background:#fff;padding:0}
+  .scrim{position:static;background:none;padding:0;display:block}
+  .modal{border:none;padding:0;max-width:none;background:none}
+  .noprint,nav,header,.view{display:none!important}
+  .inv{padding:0;border-radius:0}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- mobile / installed-app overrides ---------- */
+header{padding-top:max(26px, calc(env(safe-area-inset-top) + 16px))}
+button{min-height:42px}
+input,textarea,select{font-size:16px}          /* below 16px iOS zooms the page on focus */
+nav button{min-height:48px}
+body{overscroll-behavior-y:contain}
+.scrim{padding-top:max(20px, env(safe-area-inset-top))}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>Renewal Desk</h1><span>R2R Tutorials</span></div>
+    <div class="sub" id="today"></div>
+  </header>
+
+  <!-- ============ LEDGER ============ -->
+  <section class="view on" id="v-ledger">
+    <div class="stats">
+      <div class="stat"><div class="k">Annual book</div><div class="v mono" id="s-book">—</div></div>
+      <div class="stat hot"><div class="k">Due ≤ 30 days</div><div class="v mono" id="s-due">—</div></div>
+      <div class="stat"><div class="k">Overdue</div><div class="v mono" id="s-over">—</div></div>
+      <div class="stat"><div class="k">Collected FY</div><div class="v mono" id="s-coll">—</div></div>
+    </div>
+    <div class="sec-title">Upcoming renewals</div>
+    <div id="list"></div>
+  </section>
+
+  <!-- ============ CLIENTS ============ -->
+  <section class="view" id="v-clients">
+    <div class="note">Editing a client here changes future renewals only. Past receipts stay untouched.</div>
+    <div class="acts" style="margin-bottom:4px">
+      <button class="primary" onclick="openEdit(null)">Add client</button>
+      <button id="btn-contacts" onclick="pickContacts()">Import from contacts</button>
+      <button onclick="document.getElementById('vcf').click()">Import .vcf file</button>
+      <input type="file" id="vcf" accept=".vcf,text/vcard" multiple style="display:none" onchange="importVcf(event)">
+    </div>
+    <div class="meta" id="contacts-hint" style="margin-top:8px"></div>
+    <div class="sec-title">All clients</div>
+    <div id="clist"></div>
+  </section>
+
+  <!-- ============ RECEIPTS ============ -->
+  <section class="view" id="v-receipts">
+    <div class="sec-title">Payment history</div>
+    <div id="rlist"></div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="view" id="v-settings">
+    <div class="note">Data lives in this browser only. Export a backup before clearing site data or switching devices.</div>
+    <div class="card">
+      <div class="sec-title" style="margin-top:0">Invoice details</div>
+      <label>Your name</label><input id="cfg-name">
+      <label>Business name</label><input id="cfg-biz">
+      <label>Email</label><input id="cfg-email">
+      <label>Phone</label><input id="cfg-phone">
+      <label>Address</label><textarea id="cfg-addr" rows="2"></textarea>
+      <label>Payment instructions (UPI / bank)</label><textarea id="cfg-pay" rows="3"></textarea>
+      <label>Invoice prefix</label><input id="cfg-prefix">
+      <div class="acts"><button class="primary" onclick="saveCfg()">Save details</button></div>
+    </div>
+    <div class="card" id="install-card">
+      <div class="sec-title" style="margin-top:0">Install on this phone</div>
+      <div class="meta" id="install-hint"></div>
+      <div class="acts" id="install-acts" style="display:none"><button class="primary" onclick="doInstall()">Add to home screen</button></div>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="margin-top:0">Calendar feed</div>
+      <div class="meta" style="margin-bottom:12px">Subscribe once, then your calendar re-reads this file on its own. Adding, editing or removing a client here reaches every device the next time it refreshes.</div>
+      <div class="acts" style="margin-bottom:14px">
+        <button class="primary" onclick="publishFeed()">Download renewals.ics</button>
+        <button onclick="copyFeedUrl()">Copy feed URL</button>
+      </div>
+      <div class="meta mono" id="feed-url" style="word-break:break-all;font-size:11px;color:var(--amber)"></div>
+      <div class="meta" style="margin-top:14px">
+        <strong style="color:var(--ink)">Each time you update it</strong><br>
+        1. Tap Download renewals.ics above.<br>
+        2. Upload it to your GitHub repo root, replacing the old file.<br>
+        3. Nothing else. Subscribers pick it up within a day.
+      </div>
+      <div class="meta" style="margin-top:14px">
+        <strong style="color:var(--ink)">Subscribing, once per device</strong><br>
+        iPhone: Settings → Apps → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar → paste the URL.<br>
+        Google Calendar: on desktop, Other calendars → + → From URL → paste.
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="margin-top:0">One-off calendar file</div>
+      <div class="meta" style="margin-bottom:12px">Adds fixed entries to the calendar on this device only. Useful before the feed is live — but these do not update later.</div>
+      <div class="acts"><button onclick="allToCalendar()">Export all renewals</button></div>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="margin-top:0">Backup</div>
+      <div class="acts">
+        <button onclick="exportData()">Export backup</button>
+        <button onclick="document.getElementById('imp').click()">Import backup</button>
+        <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="danger ghost" onclick="wipe()">Erase everything</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<nav>
+  <button class="on" data-v="ledger" onclick="go('ledger')"><span class="dot"></span>Ledger</button>
+  <button data-v="clients" onclick="go('clients')"><span class="dot"></span>Clients</button>
+  <button data-v="receipts" onclick="go('receipts')"><span class="dot"></span>Receipts</button>
+  <button data-v="settings" onclick="go('settings')"><span class="dot"></span>Setup</button>
+</nav>
+
+<!-- modals -->
+<div class="scrim" id="scrim-edit"><div class="modal" id="edit-body"></div></div>
+<div class="scrim" id="scrim-import"><div class="modal" id="import-body"></div></div>
+<div class="scrim" id="scrim-collect"><div class="modal" id="collect-body"></div></div>
+<div class="scrim" id="scrim-inv"><div class="modal">
+  <div class="noprint acts" style="margin-bottom:14px">
+    <button class="primary" onclick="window.print()">Print / Save PDF</button>
+    <button onclick="copyInvText()">Copy as text</button>
+    <button class="ghost" onclick="close_('scrim-inv')">Close</button>
+  </div>
+  <div id="inv-body"></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- storage (survives on a real host, degrades gracefully) ---------------- */
+const mem = {};
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return mem[k] ?? null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } }
+};
+
+/* paid2026: true  = the 2026 renewal is collected, next due is 2027
+   paid2026: false = the 2026 renewal is outstanding
+   paid2026: null  = the 2026 renewal has not fallen due yet          */
+const SEED = [
+  {name:'Brian',             amount:20000, anchor:'2024-01-07', paid2026:true},
+  {name:'Vinod Mane',        amount:15000, anchor:'2023-01-20', paid2026:true},
+  {name:'Anurag Sharma',     amount:15000, anchor:'2024-01-23', paid2026:true},
+  {name:'Indranil Deshmukh', amount:15000, anchor:'2025-02-10', paid2026:true},
+  {name:'Ambikesh',          amount:15000, anchor:'2025-04-01', paid2026:true},
+  {name:'Sundram',           amount:15000, anchor:'2026-06-01', paid2026:true},
+  {name:'Nashwin',           amount:15000, anchor:'2025-06-24', paid2026:false},
+  {name:'Vikrant Bharadwaj', amount:15000, anchor:'2025-06-24', paid2026:false},
+  {name:'Capt Arun',         amount:15000, anchor:'2025-08-13', paid2026:null},
+  {name:'Swayam Gupta',      amount:15000, anchor:'2023-09-01', paid2026:null},
+  {name:'Swapan Kumar Paul', amount:10000, anchor:'2025-10-04', paid2026:null}
+];
+const DEF_CFG = {
+  name:'Manuel Pinto', biz:'R2R Tutorials', email:'learn2earninvesting@gmail.com',
+  phone:'', addr:'', prefix:'R2R',
+  pay:'UPI: \nBank: \nAccount no: \nIFSC: '
+};
+
+let DB = {clients:[], receipts:[], cfg:{...DEF_CFG}, seq:{}};
+
+function load(){
+  const raw = store.get('r2r_desk_v3');
+  if(raw){ try{ DB = JSON.parse(raw); }catch(e){ seed(); return; } }
+  else seed();
+  DB.cfg = {...DEF_CFG, ...(DB.cfg||{})};
+  DB.receipts ||= []; DB.seq ||= {};
+}
+function seed(){
+  DB = {clients:[], receipts:[], cfg:{...DEF_CFG}, seq:{}};
+
+  // build 2026 receipts in date order so invoice numbers run chronologically
+  const paid = SEED.filter(c=>c.paid2026===true)
+    .map(c=>({...c, on:renewalIn(c.anchor, 2026)}))
+    .sort((a,b)=>a.on.localeCompare(b.on));
+
+  SEED.forEach((c,i)=>{
+    const r2026 = renewalIn(c.anchor, 2026);
+    DB.clients.push({
+      id:'c'+i, name:c.name, amount:c.amount, anchor:c.anchor,
+      due: c.paid2026===false ? r2026 : (c.paid2026===true ? bump(r2026) : r2026),
+      email:'', phone:'', note:''
+    });
+  });
+
+  paid.forEach(c=>{
+    const cl = DB.clients.find(x=>x.name===c.name);
+    DB.receipts.push({
+      id:'r'+c.name.replace(/\W/g,''), clientId:cl.id, name:c.name,
+      amount:c.amount, date:c.on, no:nextNo(parse(c.on))
+    });
+  });
+  save();
+}
+/* the anniversary of `anchor` falling in calendar year `y` */
+function renewalIn(anchor, y){
+  const a=parse(anchor);
+  return iso(new Date(Math.max(y, a.getFullYear()), a.getMonth(), a.getDate()));
+}
+function save(){ store.set('r2r_desk_v3', JSON.stringify(DB)); }
+
+/* ---------------- dates ---------------- */
+const today = ()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; };
+const parse = s=>{ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const iso = d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmt = s=>{ const d=parse(s); return `${String(d.getDate()).padStart(2,'0')} ${MON[d.getMonth()]} ${d.getFullYear()}`; };
+const days = s=>Math.round((parse(s)-today())/864e5);
+
+function nextAnniv(anchor){
+  const a=parse(anchor), t=today();
+  let d=new Date(t.getFullYear(), a.getMonth(), a.getDate());
+  if(d<t) d=new Date(t.getFullYear()+1, a.getMonth(), a.getDate());
+  return iso(d);
+}
+function bump(s){ const d=parse(s); return iso(new Date(d.getFullYear()+1, d.getMonth(), d.getDate())); }
+
+/* Indian financial year label for a date: Apr–Mar */
+function fyOf(d){
+  const y = d.getMonth()>=3 ? d.getFullYear() : d.getFullYear()-1;
+  return `${String(y).slice(2)}-${String(y+1).slice(2)}`;
+}
+const inr = n=>'₹'+Number(n).toLocaleString('en-IN');
+const K = n=>n>=100000 ? '₹'+(n/100000).toFixed(2)+'L' : inr(n);
+
+/* ---------------- render ---------------- */
+function render(){
+  const t=today(), fy=fyOf(t);
+  document.getElementById('today').textContent =
+    `${fmt(iso(t))} · FY ${fy} · ${DB.clients.length} active clients`;
+
+  const book = DB.clients.reduce((s,c)=>s+ +c.amount, 0);
+  const soon = DB.clients.filter(c=>days(c.due)>=0 && days(c.due)<=30);
+  const over = DB.clients.filter(c=>days(c.due)<0);
+  const coll = DB.receipts.filter(r=>fyOf(parse(r.date))===fy).reduce((s,r)=>s+ +r.amount,0);
+
+  document.getElementById('s-book').textContent = K(book);
+  document.getElementById('s-due').textContent  = soon.length ? K(soon.reduce((s,c)=>s+ +c.amount,0)) : '—';
+  document.getElementById('s-over').textContent = over.length ? K(over.reduce((s,c)=>s+ +c.amount,0)) : '—';
+  document.getElementById('s-coll').textContent = K(coll);
+
+  const sorted=[...DB.clients].sort((a,b)=>days(a.due)-days(b.due));
+  document.getElementById('list').innerHTML = sorted.length ? sorted.map(c=>{
+    const n=days(c.due);
+    const cls = n<0 ? 'p-over' : n<=30 ? 'p-soon' : 'p-ok';
+    const txt = n<0 ? `${-n} days overdue` : n===0 ? 'Due today' : `in ${n} days`;
+    return `<div class="card">
+      <div class="row">
+        <div><div class="name">${esc(c.name)}</div>
+          <div class="meta">Renews ${fmt(c.due)} · client since ${fmt(c.anchor)}</div>
+          <span class="pill ${cls}">${txt}</span></div>
+        <div class="amt">${inr(c.amount)}</div>
+      </div>
+      <div class="acts">
+        <button class="primary" onclick="invoice('${c.id}')">Invoice</button>
+        <button onclick="collect('${c.id}')">Mark collected</button>
+        <button class="ghost" onclick="remind('${c.id}')">Copy reminder</button>
+        <button class="ghost" onclick="toCalendar('${c.id}')">Add to calendar</button>
+      </div></div>`;
+  }).join('') : `<div class="empty">No clients yet. Add one from the Clients tab.</div>`;
+
+  document.getElementById('clist').innerHTML = DB.clients.map(c=>`
+    <div class="card"><div class="row">
+      <div><div class="name">${esc(c.name)}</div>
+        <div class="meta">${inr(c.amount)}/yr · ${esc(c.email||'no email')}</div></div>
+      <div class="acts" style="margin:0">
+        <button onclick="openEdit('${c.id}')">Edit</button>
+        <button class="danger ghost" onclick="del('${c.id}')">Remove</button>
+      </div></div></div>`).join('') || `<div class="empty">No clients yet.</div>`;
+
+  const rs=[...DB.receipts].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('rlist').innerHTML = rs.length
+    ? rs.map(r=>`<div class="hist">${fmt(r.date)} &nbsp;·&nbsp; ${esc(r.name)} &nbsp;·&nbsp; ${inr(r.amount)} &nbsp;·&nbsp; <span style="color:var(--amber)">${esc(r.no)}</span></div>`).join('')
+    : `<div class="empty">Nothing collected yet. Use “Mark collected” on the ledger.</div>`;
+
+  for(const k of ['name','biz','email','phone','addr','pay','prefix'])
+    document.getElementById('cfg-'+k).value = DB.cfg[k] ?? '';
+}
+const esc = s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+/* ---------------- actions ---------------- */
+function go(v){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));
+  document.getElementById('v-'+v).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  window.scrollTo(0,0);
+}
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),1900); }
+function close_(id){ document.getElementById(id).classList.remove('on'); }
+
+function nextNo(d){
+  const fy=fyOf(d);
+  DB.seq[fy]=(DB.seq[fy]||0)+1;
+  return `${DB.cfg.prefix||'R2R'}/${fy}/${String(DB.seq[fy]).padStart(3,'0')}`;
+}
+
+function collect(id){
+  const c=DB.clients.find(x=>x.id===id); if(!c) return;
+  document.getElementById('collect-body').innerHTML=`
+    <h2 style="font-size:19px">Record payment</h2>
+    <div class="meta" style="margin-top:6px">${esc(c.name)} · renewal due ${fmt(c.due)}</div>
+    <div class="grid2">
+      <div><label>Amount received (₹)</label><input id="k-amt" type="number" inputmode="numeric" value="${c.amount}"></div>
+      <div><label>Date received</label><input id="k-date" type="date" value="${iso(today())}"></div>
+    </div>
+    <div class="acts" style="margin-top:18px">
+      <button class="primary" onclick="doCollect('${c.id}')">Record payment</button>
+      <button class="ghost" onclick="close_('scrim-collect')">Cancel</button>
+    </div>`;
+  document.getElementById('scrim-collect').classList.add('on');
+  setTimeout(()=>document.getElementById('k-amt').focus(),80);
+}
+
+function doCollect(id){
+  const c=DB.clients.find(x=>x.id===id); if(!c) return;
+  const when=document.getElementById('k-date').value;
+  const amt=document.getElementById('k-amt').value;
+  if(!when) return toast('Pick the date it was received');
+  if(amt===''||isNaN(+amt)) return toast('Enter the amount received');
+  const no = c.pendingNo || nextNo(parse(when));
+  DB.receipts.push({id:'r'+Date.now(), clientId:c.id, name:c.name, amount:+amt, date:when, no});
+  delete c.pendingNo;
+  c.due = bump(c.due);
+  save(); render(); close_('scrim-collect');
+  toast(`Logged ${no} · next renewal ${fmt(c.due)}`);
+}
+
+function del(id){
+  const c=DB.clients.find(x=>x.id===id);
+  if(!confirm(`Remove ${c.name}? Their past receipts are kept.`)) return;
+  DB.clients=DB.clients.filter(x=>x.id!==id); save(); render();
+}
+
+function openEdit(id){
+  const c = id ? DB.clients.find(x=>x.id===id) : {name:'',amount:15000,anchor:iso(today()),due:iso(today()),email:'',phone:'',note:''};
+  document.getElementById('edit-body').innerHTML=`
+    <h2 style="font-size:19px">${id?'Edit client':'Add client'}</h2>
+    ${!id && canPick ? `<div class="acts" style="margin:12px 0 0"><button onclick="fillFromContact()">Pick from contacts</button></div>` : ''}
+    <div class="grid2">
+      <div><label>Name</label><input id="e-name" value="${esc(c.name)}"></div>
+      <div><label>Annual fee (₹)</label><input id="e-amt" type="number" value="${c.amount}"></div>
+      <div><label>Client since</label><input id="e-anchor" type="date" value="${c.anchor}"></div>
+      <div><label>Next renewal</label><input id="e-due" type="date" value="${c.due}"></div>
+      <div><label>Email</label><input id="e-email" value="${esc(c.email)}"></div>
+      <div><label>Phone</label><input id="e-phone" value="${esc(c.phone)}"></div>
+    </div>
+    <label>Service description on invoice</label>
+    <input id="e-note" value="${esc(c.note)}" placeholder="Annual personal finance tutoring programme">
+    <div class="acts" style="margin-top:18px">
+      <button class="primary" onclick="saveClient('${id||''}')">Save</button>
+      <button class="ghost" onclick="close_('scrim-edit')">Cancel</button>
+    </div>`;
+  document.getElementById('scrim-edit').classList.add('on');
+}
+function saveClient(id){
+  const g=k=>document.getElementById('e-'+k).value;
+  if(!g('name').trim()) return toast('Name is required');
+  const data={name:g('name').trim(), amount:+g('amt')||0, anchor:g('anchor'),
+    due:g('due'), email:g('email').trim(), phone:g('phone').trim(), note:g('note').trim()};
+  if(id){ Object.assign(DB.clients.find(x=>x.id===id), data); save(); render(); close_('scrim-edit'); toast('Saved'); }
+  else {
+    const c={id:'c'+Date.now(), ...data};
+    DB.clients.push(c); save(); render(); close_('scrim-edit'); toast('Client added');
+    if(confirm(`Add ${c.name}'s yearly renewal reminder to your calendar?`)) toCalendar(c.id);
+  }
+}
+
+function saveCfg(){
+  for(const k of ['name','biz','email','phone','addr','pay','prefix'])
+    DB.cfg[k]=document.getElementById('cfg-'+k).value;
+  save(); toast('Details saved');
+}
+
+function remind(id){
+  const c=DB.clients.find(x=>x.id===id); const n=days(c.due);
+  const when = n<0 ? `was due on ${fmt(c.due)}` : n===0 ? 'falls due today' : `falls due on ${fmt(c.due)}`;
+  const msg=`Hi ${c.name.split(' ')[0]},\n\nHope you're doing well. A quick note that your annual R2R Tutorials subscription ${when}. The fee for the coming year is ${inr(c.amount)}.\n\nI'll send the invoice across shortly — do let me know if you'd like to continue on the same plan or adjust anything.\n\nWarm regards,\n${DB.cfg.name}\n${DB.cfg.biz}`;
+  copy(msg,'Reminder copied');
+}
+
+/* ---------------- invoice ---------------- */
+let lastInvText='';
+function invoice(id){
+  const c=DB.clients.find(x=>x.id===id); if(!c) return;
+  const d=today();
+  const fy=fyOf(d);
+  if(!c.pendingNo){ c.pendingNo = nextNo(d); save(); }   // number is issued once, then reused on receipt
+  const no = c.pendingNo;
+  const periodEnd = (()=>{ const s=parse(c.due); return fmt(iso(new Date(s.getFullYear()+1, s.getMonth(), s.getDate()-1))); })();
+  const desc = c.note || 'Annual personal finance tutoring programme';
+
+  document.getElementById('inv-body').innerHTML=`
+  <div class="inv">
+    <div class="inv-head">
+      <div>
+        <h2>${esc(DB.cfg.biz)}</h2>
+        <div style="font-size:12px;color:#5b6675;margin-top:4px">${esc(DB.cfg.name)}</div>
+        <div style="font-size:12px;color:#5b6675">${esc(DB.cfg.email)}${DB.cfg.phone?' · '+esc(DB.cfg.phone):''}</div>
+        <div style="font-size:12px;color:#5b6675;white-space:pre-line">${esc(DB.cfg.addr)}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="inv-lbl">Invoice</div>
+        <div class="num accent" style="font-weight:700;font-size:15px">${esc(no)}</div>
+        <div class="inv-lbl" style="margin-top:12px">Issued</div>
+        <div class="num" style="font-size:13px">${fmt(iso(d))}</div>
+        <div class="inv-lbl" style="margin-top:12px">Due</div>
+        <div class="num" style="font-size:13px">${fmt(c.due)}</div>
+      </div>
+    </div>
+
+    <div class="inv-lbl">Billed to</div>
+    <div style="font-weight:700;font-size:16px">${esc(c.name)}</div>
+    <div style="font-size:12px;color:#5b6675">${esc(c.email||'')}${c.phone?' · '+esc(c.phone):''}</div>
+
+    <table>
+      <thead><tr><th>Description</th><th class="num">Amount</th></tr></thead>
+      <tbody>
+        <tr><td>${esc(desc)}<div style="font-size:12px;color:#7b8797;margin-top:4px">
+            Subscription period ${fmt(c.due)} — ${periodEnd}</div></td>
+          <td class="num">${inr(c.amount)}</td></tr>
+        <tr class="total"><td>Total payable</td><td class="num">${inr(c.amount)}</td></tr>
+      </tbody>
+    </table>
+    <div class="words">Rupees ${words(c.amount)} only.</div>
+
+    <div class="inv-foot">
+      <div class="inv-lbl">How to pay</div>
+      <div style="white-space:pre-line;margin-bottom:14px">${esc(DB.cfg.pay)}</div>
+      <div style="font-size:11px;color:#8b94a3">
+        Educational tutoring services. Fees are non-refundable once the subscription period begins.
+        This is a service invoice; no goods have been supplied.
+      </div>
+    </div>
+  </div>`;
+
+  lastInvText = `INVOICE ${no}\n${DB.cfg.biz} — ${DB.cfg.name}\n\nBilled to: ${c.name}\nIssued: ${fmt(iso(d))}\nDue: ${fmt(c.due)}\n\n${desc}\nPeriod: ${fmt(c.due)} to ${periodEnd}\nAmount: ${inr(c.amount)}\n\nTOTAL PAYABLE: ${inr(c.amount)}\n(Rupees ${words(c.amount)} only)\n\nHow to pay:\n${DB.cfg.pay}`;
+  document.getElementById('scrim-inv').classList.add('on');
+}
+function copyInvText(){ copy(lastInvText,'Invoice copied'); }
+
+/* amount in words, Indian system */
+function words(n){
+  n=Math.round(n); if(n===0) return 'Zero';
+  const o=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve',
+    'Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const two=x=>x<20?o[x]:t[Math.floor(x/10)]+(x%10?' '+o[x%10]:'');
+  const three=x=>(x>99?o[Math.floor(x/100)]+' Hundred'+(x%100?' ':''):'')+(x%100?two(x%100):'');
+  let out='';
+  const cr=Math.floor(n/1e7); n%=1e7;
+  const la=Math.floor(n/1e5); n%=1e5;
+  const th=Math.floor(n/1e3); n%=1e3;
+  if(cr) out+=three(cr)+' Crore ';
+  if(la) out+=three(la)+' Lakh ';
+  if(th) out+=three(th)+' Thousand ';
+  if(n)  out+=three(n);
+  return out.trim();
+}
+
+/* ---------------- contacts import ---------------- */
+const canPick = ('contacts' in navigator) && ('ContactsManager' in window);
+
+function contactsHint(){
+  const el=document.getElementById('contacts-hint');
+  const btn=document.getElementById('btn-contacts');
+  if(canPick){
+    el.textContent='Your phone will ask permission and let you tick the people you want.';
+  }else{
+    btn.disabled=true; btn.style.opacity=.4; btn.style.cursor='not-allowed';
+    el.textContent='Direct contact picking needs Chrome on Android over https. On iPhone, open Contacts → share a card → save the .vcf and use “Import .vcf file”. Multiple files at once is fine.';
+  }
+}
+
+async function pickContacts(){
+  try{
+    const picked = await navigator.contacts.select(['name','email','tel'], {multiple:true});
+    if(!picked.length) return;
+    reviewImport(picked.map(p=>({
+      name:(p.name&&p.name[0])||'',
+      email:(p.email&&p.email[0])||'',
+      phone:(p.tel&&p.tel[0])||''
+    })));
+  }catch(err){
+    toast('Contacts were not shared');
+  }
+}
+
+function importVcf(e){
+  const files=[...e.target.files]; e.target.value='';
+  if(!files.length) return;
+  let out=[], left=files.length;
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=()=>{ out=out.concat(parseVcf(r.result)); if(!--left) finish(); };
+    r.onerror=()=>{ if(!--left) finish(); };
+    r.readAsText(f);
+  });
+  function finish(){
+    if(!out.length) return toast('No contacts found in that file');
+    reviewImport(out);
+  }
+}
+
+function parseVcf(text){
+  // unfold continuation lines, then read one card at a time
+  const lines=text.replace(/\r\n/g,'\n').replace(/\n[ \t]/g,'').split('\n');
+  const cards=[]; let cur=null;
+  for(const raw of lines){
+    const line=raw.trim();
+    if(/^BEGIN:VCARD$/i.test(line)){ cur={name:'',email:'',phone:'',last:'',first:''}; continue; }
+    if(/^END:VCARD$/i.test(line)){
+      if(cur){
+        if(!cur.name) cur.name=[cur.first,cur.last].filter(Boolean).join(' ').trim();
+        if(cur.name) cards.push({name:cur.name,email:cur.email,phone:cur.phone});
+      }
+      cur=null; continue;
+    }
+    if(!cur) continue;
+    const i=line.indexOf(':'); if(i<0) continue;
+    const key=line.slice(0,i).toUpperCase(), val=unesc(line.slice(i+1).trim());
+    if(/(^|;)FN($|;)/.test(key) && val) cur.name=val;
+    else if(/(^|;)N($|;)/.test(key)){ const p=val.split(';'); cur.last=p[0]||''; cur.first=p[1]||''; }
+    else if(key.includes('EMAIL') && !cur.email) cur.email=val;
+    else if(key.includes('TEL') && !cur.phone) cur.phone=val;
+  }
+  return cards;
+}
+const unesc = s=>s.replace(/\\n/gi,' ').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
+
+let staged=[];
+function reviewImport(people){
+  // drop anyone already on the books, by name
+  const have=new Set(DB.clients.map(c=>c.name.toLowerCase().trim()));
+  staged=people.filter(p=>p.name && !have.has(p.name.toLowerCase().trim()));
+  const skipped=people.length-staged.length;
+  if(!staged.length){
+    return toast(skipped?'Everyone there is already a client':'Nothing to import');
+  }
+  document.getElementById('import-body').innerHTML=`
+    <h2 style="font-size:19px">Import ${staged.length} contact${staged.length>1?'s':''}</h2>
+    <div class="meta" style="margin-top:6px">Set the annual fee and start date for each, then untick anyone you don't want.${
+      skipped?` ${skipped} already on your books ${skipped>1?'were':'was'} skipped.`:''}</div>
+    <div style="margin-top:16px">${staged.map((p,i)=>`
+      <div class="card" style="background:var(--panel2)">
+        <label style="display:flex;align-items:center;gap:10px;margin:0;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);font-family:'Syne',sans-serif;font-weight:700">
+          <input type="checkbox" id="im-on-${i}" checked style="width:18px;height:18px;accent-color:var(--amber)">
+          ${esc(p.name)}
+        </label>
+        <div class="meta" style="margin-left:28px">${esc(p.email||'no email')}${p.phone?' · '+esc(p.phone):''}</div>
+        <div class="grid2" style="margin-left:0">
+          <div><label>Annual fee (₹)</label><input id="im-amt-${i}" type="number" value="15000"></div>
+          <div><label>Client since</label><input id="im-anc-${i}" type="date" value="${iso(today())}"></div>
+        </div>
+      </div>`).join('')}</div>
+    <div class="acts" style="margin-top:8px">
+      <button class="primary" onclick="commitImport()">Add selected</button>
+      <button class="ghost" onclick="close_('scrim-import')">Cancel</button>
+    </div>`;
+  document.getElementById('scrim-import').classList.add('on');
+}
+
+function commitImport(){
+  let n=0;
+  staged.forEach((p,i)=>{
+    if(!document.getElementById('im-on-'+i).checked) return;
+    const anchor=document.getElementById('im-anc-'+i).value || iso(today());
+    DB.clients.push({
+      id:'c'+Date.now()+'_'+i, name:p.name, amount:+document.getElementById('im-amt-'+i).value||0,
+      anchor, due:nextAnniv(anchor), email:p.email||'', phone:p.phone||'', note:''
+    });
+    n++;
+  });
+  if(!n) return toast('Nothing selected');
+  const fresh=DB.clients.slice(-n);
+  save(); render(); close_('scrim-import');
+  toast(`Added ${n} client${n>1?'s':''}`);
+  if(confirm(`Added ${n} client${n>1?'s':''}. Add their renewal reminders to your calendar now?`))
+    downloadIcs(fresh, `r2r-new-renewals-${iso(today())}.ics`);
+}
+
+/* ---------------- calendar export (.ics) ---------------- */
+const icsEsc = s=>String(s??'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+const stamp = d=>iso(d).replace(/-/g,'');
+
+function vevent(c){
+  const start=parse(c.due);
+  const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+1);
+  const uid=`r2r-${c.id}@r2rtutorials`;
+  return [
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${stamp(today())}T000000Z`,
+    `DTSTART;VALUE=DATE:${stamp(start)}`,
+    `DTEND;VALUE=DATE:${stamp(end)}`,
+    `RRULE:FREQ=YEARLY;BYMONTH=${start.getMonth()+1};BYMONTHDAY=${start.getDate()}`,
+    `SUMMARY:${icsEsc(`R2R Renewal — ${c.name} (${inr(c.amount)})`)}`,
+    `DESCRIPTION:${icsEsc(`Annual tutorial fee renewal. Amount: ${inr(c.amount)}. Client since ${fmt(c.anchor)}. Raise invoice, share payment link, log the receipt.`)}`,
+    'TRANSP:TRANSPARENT',
+    'BEGIN:VALARM',
+    'TRIGGER:-P7D',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${icsEsc(`${c.name} renewal due in 7 days`)}`,
+    'END:VALARM',
+    'BEGIN:VALARM',
+    'TRIGGER:PT9H',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${icsEsc(`${c.name} renewal due today`)}`,
+    'END:VALARM',
+    'END:VEVENT'
+  ];
+}
+
+function buildIcs(clients, feed){
+  const head=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//R2R Tutorials//Renewal Desk//EN',
+    'CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    `X-WR-CALNAME:${icsEsc('R2R Renewals')}`,
+    `X-WR-CALDESC:${icsEsc('Annual tutorial fee renewals — R2R Tutorials')}`];
+  if(feed) head.push('REFRESH-INTERVAL;VALUE=DURATION:PT12H','X-PUBLISHED-TTL:PT12H');
+  return [...head, ...clients.flatMap(vevent), 'END:VCALENDAR'].join('\r\n');
+}
+
+function downloadIcs(clients, filename, feed){
+  const blob=new Blob([buildIcs(clients, feed)],{type:'text/calendar;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+function publishFeed(){
+  if(!DB.clients.length) return toast('No clients yet');
+  downloadIcs(DB.clients, 'renewals.ics', true);
+  toast('renewals.ics downloaded — commit it to your repo');
+}
+function feedUrl(){
+  try{ return new URL('renewals.ics', location.href).href; }
+  catch(e){ return 'https://learn2earninvesting-maker.github.io/r2r-renewal-desk/renewals.ics'; }
+}
+function copyFeedUrl(){ copy(feedUrl(),'Feed URL copied'); }
+
+function toCalendar(id){
+  const c=DB.clients.find(x=>x.id===id); if(!c) return;
+  downloadIcs([c], `renewal-${c.name.replace(/\W+/g,'-').toLowerCase()}.ics`);
+  toast('Open the file to add it to your calendar');
+}
+function allToCalendar(){
+  if(!DB.clients.length) return toast('No clients yet');
+  downloadIcs(DB.clients, `r2r-renewals-${iso(today())}.ics`);
+  toast(`${DB.clients.length} renewals exported`);
+}
+
+/* ---------------- utils ---------------- */
+function copy(txt,msg){
+  if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast(msg)).catch(()=>fallback(txt,msg));
+  } else fallback(txt,msg);
+}
+function fallback(txt,msg){
+  const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity=0;
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast(msg); }catch(e){ prompt('Copy this:', txt); }
+  ta.remove();
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=`r2r-desk-${iso(today())}.json`; a.click();
+  URL.revokeObjectURL(a.href); toast('Backup downloaded');
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ DB=JSON.parse(r.result); save(); render(); toast('Backup restored'); }
+    catch(err){ toast('That file could not be read'); } };
+  r.readAsText(f); e.target.value='';
+}
+function wipe(){
+  if(!confirm('Erase all clients and receipts and reload the starting list?')) return;
+  seed(); render(); toast('Reset to the starting list');
+}
+document.querySelectorAll('.scrim').forEach(s=>s.addEventListener('click',ev=>{
+  if(ev.target===s) s.classList.remove('on');
+}));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.scrim').forEach(s=>s.classList.remove('on')); });
+
+async function fillFromContact(){
+  try{
+    const [p] = await navigator.contacts.select(['name','email','tel'], {multiple:false});
+    if(!p) return;
+    document.getElementById('e-name').value  = (p.name&&p.name[0])||'';
+    document.getElementById('e-email').value = (p.email&&p.email[0])||'';
+    document.getElementById('e-phone').value = (p.tel&&p.tel[0])||'';
+    toast('Contact filled in');
+  }catch(err){ toast('Contacts were not shared'); }
+}
+
+/* ---------------- install + offline ---------------- */
+let deferredInstall=null;
+const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredInstall=e; installHint();
+});
+window.addEventListener('appinstalled', ()=>{ deferredInstall=null; installHint(); toast('Installed'); });
+
+function installHint(){
+  const hint=document.getElementById('install-hint');
+  const acts=document.getElementById('install-acts');
+  if(standalone){
+    hint.textContent='Already installed. You are running the app version.'; acts.style.display='none';
+  }else if(deferredInstall){
+    hint.textContent='Adds a Renewal Desk icon to your home screen. It then opens full screen and works without a signal.';
+    acts.style.display='flex';
+  }else if(isIOS){
+    hint.textContent='In Safari, tap the Share button, then Add to Home Screen. It then opens full screen and works without a signal. Chrome on iPhone cannot install it — use Safari.';
+    acts.style.display='none';
+  }else{
+    hint.textContent='Use your browser menu and choose Install app or Add to Home screen.';
+    acts.style.display='none';
+  }
+}
+async function doInstall(){
+  if(!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall=null; installHint();
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      reg.addEventListener('updatefound', ()=>{
+        const w=reg.installing;
+        w && w.addEventListener('statechange', ()=>{
+          if(w.state==='installed' && navigator.serviceWorker.controller) toast('Update ready — reopen the app');
+        });
+      });
+    }).catch(()=>{});
+  });
+}
+
+load(); render(); contactsHint(); installHint();
+document.getElementById('feed-url').textContent = feedUrl();
+
+const startView=new URLSearchParams(location.search).get('v');
+if(['ledger','clients','receipts','settings'].includes(startView)) go(startView);
+</script>
+</body>
+</html>
