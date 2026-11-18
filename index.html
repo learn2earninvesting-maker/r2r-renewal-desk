@@ -236,7 +236,7 @@ button.rowx,a.rowx{cursor:pointer}
   <div class="side-nav" id="side-nav"></div>
   <div class="side-foot">
     <span class="updated" id="sync-note">On this phone</span>
-    <span class="updated">App version 6</span>
+    <span class="updated">App version 7</span>
   </div>
 </nav>
 <div class="scrim menu" onclick="menu(false)"></div>
@@ -303,7 +303,7 @@ var R2R = (function () {
   }
 
   var DEF_CFG = { name: 'Manuel Pinto', biz: 'R2R Tutorials', email: 'learn2earninvesting@gmail.com',
-    phone: '', addr: '', upi: '', pay: '', prefix: 'R2R', live: false };
+    phone: '', addr: '', upi: '', pay: '', prefix: 'R2R', qr: '', live: false };
 
   function normalize(db) {
     db = db || {};
@@ -354,7 +354,7 @@ var R2R = (function () {
 
   function uid(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   var EDITABLE = ['name', 'email', 'phone', 'amount', 'anchor', 'due', 'note'];
-  var CFG_KEYS = ['name', 'biz', 'email', 'phone', 'addr', 'upi', 'pay', 'prefix'];
+  var CFG_KEYS = ['name', 'biz', 'email', 'phone', 'addr', 'upi', 'pay', 'prefix', 'qr'];
 
   /* Every change to the books goes through here, on the phone and in the autopilot alike. */
   function apply(db, op, a, today) {
@@ -397,7 +397,10 @@ var R2R = (function () {
       }
       case 'waUndo': { var cz = ensure(c); if (cz.wa.length) cz.wa.pop(); else cz.waHead = null; return c; }
       case 'cfg':
-        CFG_KEYS.forEach(function (k) { if (k in a) db.cfg[k] = String(a[k]); }); return db.cfg;
+        CFG_KEYS.forEach(function (k) { if (k in a) db.cfg[k] = String(a[k]); });
+        if (db.cfg.qr && !/^data:image\/(png|jpeg);base64,/.test(db.cfg.qr)) db.cfg.qr = '';
+        if (db.cfg.qr.length > 400000) throw new Error('That QR picture is too large. Use a screenshot of just the code.');
+        return db.cfg;
       case 'live':
         db.cfg.live = !!a.live; return db.cfg;
       default: throw new Error('Unknown action: ' + op);
@@ -861,6 +864,16 @@ function vSetup(){
       <div class="fld"><label for="cfg-phone">Phone</label><input id="cfg-phone" type="tel" value="${esc(cfg.phone)}"></div>
     </div>
     <div class="fld key"><label for="cfg-upi">UPI ID · shown in emails and WhatsApp</label><input id="cfg-upi" value="${esc(cfg.upi)}" placeholder="yourname@okhdfcbank" autocomplete="off"></div>
+    <div class="fld"><span class="lbl">UPI QR code (optional) · added to emails and invoices</span>
+      <div style="display:flex;align-items:center;gap:12px">
+        ${cfg.qr ? `<img src="${cfg.qr}" alt="Your UPI QR code" style="width:96px;height:96px;object-fit:contain;background:#fff;border-radius:10px;border:1px solid var(--border)">` : ''}
+        <div class="btn-row" style="flex:1">
+          <button type="button" class="pill-btn" onclick="document.getElementById('qr-file').click()">${cfg.qr ? 'Change QR' : 'Upload QR image'}</button>
+          ${cfg.qr ? `<button type="button" class="pill-btn" onclick="removeQr()">Remove</button>` : ''}
+        </div>
+      </div>
+      <input type="file" id="qr-file" accept="image/*" style="display:none" onchange="uploadQr(event)">
+    </div>
     <div class="fld"><label for="cfg-pay">Bank details (optional)</label><textarea id="cfg-pay" rows="3" placeholder="Bank · Account no · IFSC">${esc(cfg.pay)}</textarea></div>
     <div class="fld"><label for="cfg-addr">Address on invoice (optional)</label><textarea id="cfg-addr" rows="2">${esc(cfg.addr)}</textarea></div>
     <div class="fld"><label for="cfg-prefix">Invoice prefix</label><input id="cfg-prefix" value="${esc(cfg.prefix)}"></div>
@@ -876,7 +889,7 @@ function vSetup(){
     <div class="btn-row"><button class="pill-btn" onclick="exportBackup()">Export backup</button>
       <button class="pill-btn" onclick="document.getElementById('imp').click()">Import backup</button></div></div>
   <div class="sec">Install</div>
-  <div class="cardx pad"><p class="muted" style="margin:0">${installHint()} App version 6.</p>
+  <div class="cardx pad"><p class="muted" style="margin:0">${installHint()} App version 7.</p>
     ${deferredInstall ? `<button class="btn" style="margin-top:12px" onclick="doInstall()">Add to home screen</button>` : ''}</div>`;
 }
 
@@ -959,6 +972,7 @@ function openWA(id, kind, isDue){
     <p class="muted" style="margin:8px 0 0">You can change the words here or in WhatsApp before sending.</p>
     <div class="stack">
       <button class="btn" onclick="sendWA()">Open in WhatsApp</button>
+      ${S.db.cfg.qr && canShareFiles() ? `<button class="pill-btn" style="min-height:48px" onclick="shareQr()">Share with QR code</button>` : ''}
       <div class="btn-row"><button class="pill-btn" onclick="copy(document.getElementById('wa-text').value,'Message copied')">Copy message</button>
         ${isDue ? `<button class="pill-btn fill" onclick="markWA()">Mark as sent</button>` : ''}</div>
     </div>`);
@@ -972,6 +986,35 @@ function sendWA(){
   window.open(R2R.waLink(c.phone, text), '_blank');
   if (WA.isDue) markWA(true); else closeSheet();
 }
+/* --- UPI QR picture --- */
+function qrFile(){
+  const m = /^data:(image\/(png|jpeg));base64,(.+)$/.exec(S.db.cfg.qr || ''); if (!m) return null;
+  const bin = atob(m[3]), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return new File([u], 'upi-qr.' + (m[2] === 'png' ? 'png' : 'jpg'), { type: m[1] });
+}
+function canShareFiles(){ try { const f = qrFile(); return !!(f && navigator.canShare && navigator.canShare({ files:[f] })); } catch(e) { return false; } }
+async function shareQr(){
+  const text = document.getElementById('wa-text').value;
+  try { await navigator.share({ files:[qrFile()], text }); copy(text, 'Pick WhatsApp. The message is also copied, in case it doesn’t come through.'); if (WA.isDue) markWA(true); }
+  catch(e) { if (e.name !== 'AbortError') toast('Could not share the picture. Use Open in WhatsApp instead.'); }
+}
+function uploadQr(e){
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const img = new Image(), url = URL.createObjectURL(f);
+  img.onload = async () => {
+    const max = 640, k = Math.min(1, max / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    let data = c.toDataURL('image/png'); if (data.length > 300000) data = c.toDataURL('image/jpeg', 0.9);
+    await act('cfg', { qr:data });
+    toast(S.db.cfg.qr ? 'QR code saved · it now appears in emails and invoices' : 'Not saved. Update the autopilot script first (see the steps I sent).');
+  };
+  img.onerror = () => toast('That file isn’t a picture the phone can read');
+  img.src = url;
+}
+async function removeQr(){ if (confirm('Remove your QR code from emails and invoices?')) await act('cfg', { qr:'' }, 'QR code removed'); }
+
 async function markWA(quiet){
   const { id, kind } = WA; closeSheet();
   await act('wa', { id, kind }, quiet ? 'Marked as sent · undo on the client page' : 'Marked as sent');
@@ -997,7 +1040,9 @@ function showInvoice(id){
       <tr><td>${esc(desc)}<div class="small" style="margin-top:4px">Subscription period ${R2R.fmt(c.due)} — ${R2R.fmt(end)}</div></td><td class="num">${R2R.inr(c.amount)}</td></tr>
       <tr class="total"><td>Total payable</td><td class="num">${R2R.inr(c.amount)}</td></tr></tbody></table>
     <div class="small" style="font-style:italic">Rupees ${R2R.words(c.amount)} only.</div>
-    <div class="inv-foot"><div class="inv-lbl">How to pay</div><div style="white-space:pre-line;margin-bottom:14px">${esc(pay || 'Add your UPI ID in Setup')}</div>
+    <div class="inv-foot"><div class="inv-lbl">How to pay</div>
+      ${cfg.qr ? `<img src="${cfg.qr}" alt="UPI QR code" style="width:150px;height:150px;object-fit:contain;margin:4px 0 8px;display:block">` : ''}
+      <div style="white-space:pre-line;margin-bottom:14px">${esc(pay || (cfg.qr ? '' : 'Add your UPI ID in Setup'))}</div>
       <div style="font-size:11px;color:#6b7280">Educational tutoring services. Fees are non-refundable once the subscription period begins. This is a service invoice; no goods have been supplied.</div></div></div>`;
   lastInvText = `INVOICE ${no}\n${cfg.biz} — ${cfg.name}\n\nBilled to: ${c.name}\nIssued: ${R2R.fmt(issued)}\nDue: ${R2R.fmt(c.due)}\n\n${desc}\nPeriod: ${R2R.fmt(c.due)} to ${R2R.fmt(end)}\n\nTOTAL PAYABLE: ${R2R.inr(c.amount)}\n(Rupees ${R2R.words(c.amount)} only)\n\nHow to pay:\n${pay}`;
   document.getElementById('inv-wrap').classList.add('on');
