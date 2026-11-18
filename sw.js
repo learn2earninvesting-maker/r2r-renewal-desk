@@ -1,6 +1,6 @@
 /* R2R Renewal Desk — offline shell.
    Bump CACHE when you change index.html, or phones will keep serving the old copy. */
-const CACHE = 'r2r-desk-v1';
+const CACHE = 'r2r-desk-v2';
 
 const SHELL = [
   './',
@@ -29,6 +29,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // The autopilot (Google Apps Script) must always be live, never a cached copy.
+  if (/(^|\.)script\.google(usercontent)?\.com$/.test(url.hostname)) return;
 
   // Pages: try the network so updates land, fall back to cache when offline.
   if (req.mode === 'navigate') {
@@ -44,7 +48,9 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Everything else (icons, Google Fonts): serve from cache, fill it on first hit.
+  // Only our own files and Google Fonts are cached.
+  if (url.origin !== location.origin && !/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) return;
+
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       if (res && (res.ok || res.type === 'opaque')) {
