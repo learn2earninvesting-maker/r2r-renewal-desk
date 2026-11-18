@@ -1003,10 +1003,18 @@ async function connect(){
   const raw = document.getElementById('conn-link').value.trim();
   let url, key;
   try { const u = new URL(raw); key = u.searchParams.get('key'); url = u.origin + u.pathname; } catch(e) {}
-  if (!url || !key) return toast('That doesn’t look like the connection link. Copy it again from the Sheet.');
+  if (!url || !/script\.google(usercontent)?\.com$/.test(new URL(url).hostname)) return connErr('That isn’t the connection link. In the Sheet use R2R → Show connection link and copy the whole thing.');
+  if (/\/dev$/.test(url)) return connErr('That is the test (/dev) address. Use R2R → Show connection link in the Sheet; it should end in /exec?key=…');
+  if (!key || key === 'null') return connErr('The link has no key. In Apps Script, run “setup” once, then copy the link again from R2R → Show connection link.');
   document.body.classList.add('busy');
   try {
-    const j = await (await fetch(`${url}?a=get&key=${encodeURIComponent(key)}`)).json();
+    let res;
+    try { res = await fetch(`${url}?a=get&key=${encodeURIComponent(key)}`); }
+    catch(e) { throw new Error('Could not reach Google. Check your signal. If you have signal, open Apps Script → Deploy → Manage deployments and check “Who has access” is set to Anyone.'); }
+    const txt = await res.text();
+    let j; try { j = JSON.parse(txt); } catch(e) {
+      throw new Error('Google asked for a sign-in instead of answering. In Apps Script: Deploy → Manage deployments → pencil icon → Who has access: Anyone → Version: New version → Deploy. Then try again.');
+    }
     if (!j.ok) throw new Error(j.error);
     S.conn = { url, key }; store.set(KEY_CONN, JSON.stringify(S.conn));
     const server = R2R.normalize(j.db);
@@ -1018,8 +1026,15 @@ async function connect(){
       toast(`Connected · ${server.clients.length} clients loaded from the Sheet`);
     }
     render();
-  } catch(e) { toast(e.message && !/Failed to fetch/i.test(e.message) ? e.message : 'Could not reach that link. Check it was deployed as a Web app for “Anyone”.'); }
+  } catch(e) { connErr(e.message || 'Could not connect.'); }
   finally { document.body.classList.remove('busy'); }
+}
+/* connection problems stay on screen (a toast vanishes before you can read the fix) */
+function connErr(msg){
+  let el = document.getElementById('conn-err');
+  if (!el) { el = document.createElement('div'); el.id = 'conn-err'; el.className = 'blush'; el.style.marginTop = '12px';
+    el.style.fontSize = '13px'; el.style.lineHeight = '1.5'; document.getElementById('conn-link')?.closest('.cardx')?.appendChild(el); }
+  el.innerHTML = '<h4>Couldn’t connect</h4>' + esc(msg);
 }
 function disconnect(){
   if (!confirm('Disconnect this phone? The autopilot keeps running, and your list stays in the Sheet.')) return;
