@@ -1,21 +1,53 @@
 {
   "name": "R2R Renewal Desk",
   "short_name": "Renewal Desk",
-  "description": "Annual renewal ledger and invoice generator for R2R Tutorials.",
+  "description": "Annual renewals, reminders and receipts for R2R Tutorials.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#04080f",
-  "theme_color": "#04080f",
-  "categories": ["business", "finance", "productivity"],
+  "background_color": "#F2F3EE",
+  "theme_color": "#F2F3EE",
+  "categories": [
+    "business",
+    "finance",
+    "productivity"
+  ],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Ledger", "short_name": "Ledger", "url": "./?v=ledger" },
-    { "name": "Clients", "short_name": "Clients", "url": "./?v=clients" }
+    {
+      "name": "Today",
+      "short_name": "Today",
+      "url": "./#today"
+    },
+    {
+      "name": "Clients",
+      "short_name": "Clients",
+      "url": "./#clients"
+    },
+    {
+      "name": "Add client",
+      "short_name": "Add",
+      "url": "./#add"
+    }
   ]
 }

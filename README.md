@@ -1,100 +1,86 @@
 # R2R Renewal Desk
 
-Annual renewal ledger and invoice generator for R2R Tutorials. Runs entirely in the
-browser — no server, no database, no accounts. Installs to a phone home screen and
-works without a signal.
+Annual renewals for R2R Tutorials, on autopilot.
+
+- **The app** (`index.html`) runs on your phone from GitHub Pages and works without a signal.
+- **The autopilot** (`Code.gs`) is a free Google Apps Script in your own Google account. Every morning at 07:00 it:
+  - emails each client a heads-up **14 days before** their renewal
+  - emails the **invoice PDF on the renewal date**
+  - keeps a **"R2R Renewals" Google Calendar** up to date
+  - emails you a digest only when something needs you
+- **WhatsApp reminders** are written by the app. A week after an unpaid due date, then weekly up to 3, a reminder appears on the Today screen. You tap **WhatsApp**, check the message and press Send. After reminder 3 the app tells you to call.
+
+Your clients and receipts are kept in a Google Sheet, so every device shows the same list.
 
 ## Files
 
-| File | Purpose |
+| File | Where it goes |
 |---|---|
-| `index.html` | The whole app — UI, logic, invoice template |
-| `manifest.webmanifest` | Name, icons, colours for the installed app |
-| `sw.js` | Service worker; makes it work offline |
-| `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` | Icons |
+| `index.html`, `sw.js`, `manifest.webmanifest`, icons | This GitHub repository (root) |
+| `Code.gs` | **Not GitHub.** Paste it into the Apps Script editor of your Google Sheet (step 1) |
+| `renewals.ics` | No longer needed. Leave it or delete it |
 
-## Putting it on GitHub Pages
+---
 
-1. Create a repository, e.g. `r2r-renewal-desk`.
-2. Upload all the files above to the repository root (not inside a folder).
-3. **Settings → Pages → Build and deployment → Source: Deploy from a branch**,
-   branch `main`, folder `/ (root)`. Save.
-4. Wait a minute or two, then open
-   `https://learn2earninvesting-maker.github.io/r2r-renewal-desk/`.
+## Setting it up (once, about 20 minutes)
 
-GitHub Pages serves over HTTPS, which is what the service worker, install prompt and
-contacts picker all require. It will not install from a `file://` path.
+### On your laptop: the autopilot
 
-## Installing on your phone
+1. Go to **sheets.google.com** signed in as learn2earninvesting@gmail.com and create a blank sheet. Name it **R2R Renewal Desk**.
+2. In the sheet, open **Extensions → Apps Script**. Delete the few lines already in the editor, paste in the whole of `Code.gs`, and press **Save** (the disk icon).
+3. In the dropdown next to **Run**, choose **setup**, then press **Run**.
+   Google asks for permission: **Review permissions → your account → Advanced → Go to project (unsafe) → Allow**.
+   It says "unsafe" only because you wrote the script yourself and Google hasn't reviewed it. It runs only in your account.
+4. Press **Deploy → New deployment**. Click the gear icon, choose **Web app**, and set:
+   - Execute as: **Me**
+   - Who has access: **Anyone**
 
-- **Android / Chrome** — open the URL, then **Setup → Add to home screen**, or use the
-  browser's Install app menu item.
-- **iPhone** — open the URL **in Safari** (Chrome on iOS cannot install web apps),
-  tap Share, then Add to Home Screen.
+   Then press **Deploy**.
+5. Go back to the sheet tab and reload it. A new **R2R** menu appears. Open **R2R → Show connection link** and copy the link. Email it to yourself so you can open it on your phone.
 
-## First run
+### On your laptop: the app
 
-Open **Setup** and fill in your UPI and bank details, phone and address. Everything on
-the invoice comes from there.
+6. Open **github.com/learn2earninvesting-maker/r2r-renewal-desk**.
+7. Click **Add file → Upload files**. Drag in `index.html`, `sw.js`, `manifest.webmanifest` and `README.md`, then press **Commit changes**. GitHub replaces the old copies.
+8. Wait about two minutes for GitHub Pages to update.
 
-## Where the data lives
+### On your phone
 
-In the browser's local storage on that one device. Nothing is uploaded anywhere.
+9. Open the Renewal Desk as you normally do. If it still looks like the old dark app, close it fully and open it again.
+10. Your clients carry over from the old version on their own. Open the **☰ menu → Setup**, paste the connection link under **Connect autopilot** and tap **Connect**. Your clients copy into the Sheet.
+11. Still in Setup, fill in **Invoice and payment details**, especially your **UPI ID**, and tap **Save details**.
+12. Go to **Clients**. For each client, tap **Edit** and add their **email** and **WhatsApp number**. Without an email, the autopilot can't send their heads-up and invoice.
+13. Tap **Send me test emails**. Four samples arrive in your inbox, marked [TEST]: heads-up, invoice, receipt and your digest. Check the wording and your payment details.
+14. When you're happy, tap **Go live**. From the next morning at 07:00, emails go to clients.
 
-That means: clearing site data wipes it, and a second device starts empty. Use
-**Setup → Export backup** after each round of collections, and **Import backup** to move
-to a new phone.
+Until you press Go live, the autopilot is in **test mode**. Each morning it emails *you* a list of what it would have sent, and clients get nothing.
 
-## Publishing changes
+**Google Calendar:** the renewals appear on a new calendar called **R2R Renewals**. On iPhone, add your Google account under Settings → Calendar → Accounts if it isn't already there. If you subscribed to the old `renewals.ics` feed, you can remove that subscription now.
 
-Browsers cache the app aggressively once the service worker is installed. After editing
-`index.html`, bump the version in `sw.js`:
+---
 
-```js
-const CACHE = 'r2r-desk-v2';   // was v1
-```
+## What you do from then on
 
-Without that, phones keep serving the old copy.
+| When | What |
+|---|---|
+| Money arrives | Open the client → **Record payment**. They get a receipt email, and their renewal moves on a year. |
+| A WhatsApp reminder is due | It shows in red on **Today**. Tap **WhatsApp**, then press Send in WhatsApp. |
+| After 3 reminders, still unpaid | Today shows **Call these**. Call them, then **Record payment** or **Mark lapsed**. |
+| New client | **☰ → Add client**. Nothing else to do. |
+| Fee changes or client leaves | **Edit** the fee, or **Mark lapsed** |
+| Once a year, if you like | **Money → Export** gives you the year's receipts as a spreadsheet |
 
-## Calendar
+Invoice numbers run `R2R/26-27/001`, `002`… and restart each 1 April.
 
-The app does not sync with your calendar. **Setup → Export all renewals** produces a
-`.ics` file; opening it adds a yearly repeating reminder per client, alerting 7 days
-ahead and again on the day. Re-export after changing fees or dates — entries carry a
-stable ID per client, so they update rather than duplicate. Deleting a client here does
-not remove their calendar entry; do that in the calendar app.
+Clients who were **more than 14 days overdue** when the autopilot started don't get an automatic invoice. Use the WhatsApp reminders for them. The **Invoice** button on any client opens a printable copy you can share yourself.
 
-## Keeping the calendar in sync (subscribed feed)
+## If something seems off
 
-`renewals.ics` in this repo is a live calendar feed. Subscribe once per device and it
-re-reads the file on its own — adding, editing or removing a client eventually reaches
-every calendar without touching them individually.
+- **Setup** shows the last morning run and whether it worked. If a run fails, Google emails you.
+- **R2R → Run autopilot now** in the Sheet runs the morning check straight away.
+- **Wrong key / can't connect:** copy the link again from **R2R → Show connection link**. If you changed `Code.gs`, deploy again with **Deploy → Manage deployments → Edit → Version: New version**.
+- **Keep the connection link private.** Anyone with it can see your client list.
 
-Feed URL:
+## Publishing changes to the app
 
-```
-https://learn2earninvesting-maker.github.io/r2r-renewal-desk/renewals.ics
-```
-
-**Subscribe (once per device)**
-
-- iPhone: Settings → Apps → Calendar → Accounts → Add Account → Other →
-  Add Subscribed Calendar → paste the URL.
-- Google Calendar: on desktop, Other calendars → **+** → From URL → paste.
-  It will not accept a URL added from the mobile app.
-
-**Update it (whenever clients change)**
-
-1. In the app: Setup → **Download renewals.ics**.
-2. Upload that file to the repo root, replacing the existing one.
-3. Done. Subscribers refresh on their own.
-
-Notes:
-
-- Yearly repetition is built into each entry, so nothing needs doing at year end.
-- Google refreshes subscribed URLs on its own schedule, often 12–24 hours, and cannot be
-  forced. Irrelevant for annual renewals with a 7-day advance alert.
-- Subscribed calendars are read-only on the device. Record payments in the app, not the
-  calendar.
-- Do not also import the one-off export onto a device that subscribes to the feed, or
-  every renewal shows twice.
+After editing `index.html`, bump the version at the top of `sw.js` (`r2r-desk-v2` → `r2r-desk-v3`). Otherwise phones keep showing the old copy.

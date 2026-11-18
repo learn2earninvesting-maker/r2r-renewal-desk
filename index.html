@@ -1,285 +1,469 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>R2R Renewal Desk</title>
-<meta name="description" content="Annual renewal ledger and invoice generator for R2R Tutorials.">
-<meta name="theme-color" content="#04080f">
+<meta name="description" content="Annual renewals, reminders and receipts for R2R Tutorials.">
+<meta name="theme-color" content="#F2F3EE">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Renewal Desk">
 <meta name="format-detection" content="telephone=no">
+<meta name="robots" content="noindex, nofollow">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>
+  (function () { var t = null; try { t = localStorage.getItem('r2r_desk_theme'); } catch (e) {}
+    document.documentElement.setAttribute('data-theme', t || 'light'); })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#04080f; --panel:#0a121e; --panel2:#0e1826;
-  --line:#182437; --ink:#e8eef7; --dim:#8899b0; --faint:#5a6d87;
-  --amber:#f0a500; --amber-soft:rgba(240,165,0,.12);
-  --green:#2fbf71; --red:#e5484d; --blue:#4c8dff;
-  --r:14px;
+:root, :root[data-theme="light"]{
+  --bg:#F2F3EE; --card:#FFFFFF; --border:#D9DCD2; --track:#E2E4DC; --line:#ECEEE7;
+  --ink:#16181D; --on-ink:#FFFFFF; --text2:#3A3F46; --text3:#555B63;
+  --pos:#1E6B45; --neg:#A12B1F; --alert:#B3261E; --on-alert:#FFFFFF;
+  --cream:#FAF4E4; --cream-line:#E8DFC8;
+  --p-blue:#DCE7F5; --p-mint:#DDEFE3; --p-blush:#F8E1DC; --p-butter:#FBEFC9; --p-lilac:#E9E1F4; --butter-ink:#5C4300;
+  --topbar:rgba(242,243,238,.95); --scrim:rgba(0,0,0,.45);
+}
+:root[data-theme="dark"]{
+  --bg:#111413; --card:#222725; --border:#2F3533; --track:#181C1A; --line:#2F3533;
+  --ink:#F1F2EC; --on-ink:#111413; --text2:#C9CEC9; --text3:#A3AAA6;
+  --pos:#6FCF97; --neg:#F28B82; --alert:#8E1F19; --on-alert:#FFFFFF;
+  --cream:#2A2620; --cream-line:#3B352B;
+  --p-blue:#1F2C3D; --p-mint:#1D3327; --p-blush:#3D2320; --p-butter:#3A3118; --p-lilac:#2E2740; --butter-ink:#F0D88A;
+  --topbar:rgba(17,20,19,.95); --scrim:rgba(0,0,0,.6);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
-body{
-  background:var(--bg); color:var(--ink);
-  font-family:'DM Sans',system-ui,sans-serif;
-  padding-bottom:96px; line-height:1.5;
-}
-h1,h2,h3{font-family:'Syne',sans-serif;margin:0;letter-spacing:-.02em}
-.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
-.wrap{max-width:920px;margin:0 auto;
-  padding:0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right))}
+body{background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,sans-serif;font-size:15px;line-height:1.45;
+  overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 
-/* ---------- header ---------- */
-header{padding:26px 0 18px;border-bottom:1px solid var(--line);margin-bottom:18px}
-.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.brand h1{font-size:22px;font-weight:800}
-.brand span{color:var(--amber);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
-.sub{color:var(--faint);font-size:13px;margin-top:6px}
+/* shell */
+.bar{position:sticky;top:0;z-index:100;background:var(--topbar);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);padding:10px 18px;padding-top:max(10px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px}
+.bar-brand{font-size:18px;font-weight:800;letter-spacing:-.01em;text-decoration:none}
+.menu-btn{min-height:44px;min-width:44px;border:1px solid var(--ink);border-radius:12px;background:transparent;display:flex;align-items:center;justify-content:center;padding:0}
+.pill-btn{min-height:40px;padding:0 14px;border:1px solid var(--ink);border-radius:99px;background:transparent;font-size:12px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+.pill-btn:hover{background:var(--track)}
+.pill-btn.fill{background:var(--p-mint)}
+.bar .pill-btn{margin-left:auto}
+.main{max-width:680px;margin:0 auto;padding:24px 18px 48px;padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}
 
-/* ---------- stats ---------- */
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
-@media(min-width:640px){.stats{grid-template-columns:repeat(4,1fr)}}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
-.stat .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-family:'JetBrains Mono',monospace}
-.stat .v{font-family:'Syne',sans-serif;font-size:21px;font-weight:700;margin-top:6px}
-.stat.hot .v{color:var(--amber)}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:272px;max-width:86vw;background:var(--bg);border-right:1px solid var(--border);z-index:300;
+  padding:28px 18px;padding-top:max(28px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:24px;transform:translateX(-105%);transition:transform .2s ease;overflow-y:auto}
+body.menu-open .drawer{transform:none;box-shadow:0 0 40px rgba(0,0,0,.25)}
+.scrim{display:none;position:fixed;inset:0;background:var(--scrim);z-index:250}
+body.menu-open .scrim.menu{display:block}
+.side-brand{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.side-brand b{font-size:20px;font-weight:800}
+.side-brand span{font-size:12px;color:var(--text3)}
+.side-nav{display:flex;flex-direction:column;gap:4px}
+.tab-btn{display:flex;align-items:center;min-height:46px;padding:0 14px;border:0;border-radius:12px;background:transparent;font-size:15px;font-weight:700;text-align:left;text-decoration:none}
+.tab-btn:hover{background:var(--track)}
+.tab-btn.active{background:var(--ink);color:var(--on-ink)}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 6px}
+.updated{font-size:11px;color:var(--text3);background:var(--track);padding:6px 10px;border-radius:99px;align-self:flex-start}
 
-/* ---------- cards ---------- */
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px}
-.row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.name{font-family:'Syne',sans-serif;font-weight:700;font-size:16px}
-.meta{color:var(--faint);font-size:12px;margin-top:3px}
-.amt{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:15px;white-space:nowrap}
-.pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;
-  padding:3px 8px;border-radius:999px;text-transform:uppercase;margin-top:8px}
-.p-over{background:rgba(229,72,77,.14);color:#ff8f92;border:1px solid rgba(229,72,77,.35)}
-.p-soon{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(240,165,0,.35)}
-.p-ok{background:rgba(47,191,113,.1);color:#6fd99b;border:1px solid rgba(47,191,113,.28)}
-.acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-button{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;
-  border-radius:9px;padding:8px 13px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);
-  transition:.15s}
-button:hover{border-color:var(--amber);color:var(--amber)}
-button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-button.primary{background:var(--amber);color:#04080f;border-color:var(--amber);font-weight:700}
-button.primary:hover{filter:brightness(1.12);color:#04080f}
-button.ghost{background:transparent;color:var(--faint)}
-button.danger:hover{border-color:var(--red);color:var(--red)}
+/* page pieces */
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 16px}
+.chip{font-size:13px;font-weight:600;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--text2);
+  display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.chip.on{border-color:var(--ink);background:var(--p-butter);color:var(--ink)}
+.chip.test{border-color:var(--ink);background:var(--p-lilac);color:var(--ink)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--pos)}
+.pg-head{margin-bottom:16px}
+.pg-kicker{font-size:14px;color:var(--text3)}
+.pg-big{font-size:36px;font-weight:800;letter-spacing:-.02em;line-height:1.08;overflow-wrap:anywhere}
+.pg-sub{font-size:13px;font-weight:700;color:var(--pos);margin-top:2px}
+.pg-sub.neg{color:var(--neg)} .pg-sub.warn{color:var(--butter-ink)} .pg-sub.dim{color:var(--text3)}
+.pills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pills.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pill{border-radius:14px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;background:var(--card);min-width:0}
+.pill span{font-size:12px;color:var(--text3)}
+.pill b{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill.blue{background:var(--p-blue)} .pill.mint{background:var(--p-mint)} .pill.blush{background:var(--p-blush)}
+.pill.butter{background:var(--p-butter)} .pill.lilac{background:var(--p-lilac)}
+.pill b.neg{color:var(--neg)}
+.sec{font-size:15px;font-weight:700;margin:22px 0 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cardx{background:var(--card);border-radius:16px;padding:4px 16px;margin-bottom:10px}
+.cardx.pad{padding:16px}
+.cream{background:var(--cream);border-radius:16px;padding:2px 14px;margin-bottom:10px}
+.cream .rowx+.rowx{border-top:1px solid var(--cream-line)}
+.rowx{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;text-decoration:none;color:inherit;width:100%;background:none;border:0;text-align:left}
+.cardx .rowx+.rowx{border-top:1px solid var(--line)}
+button.rowx,a.rowx{cursor:pointer}
+.rowx .a{font-size:15px;font-weight:700;overflow-wrap:anywhere}
+.rowx .b{font-size:12px;color:var(--text3);margin-top:2px}
+.rowx .b.neg{color:var(--neg);font-weight:700} .rowx .b.pos{color:var(--pos);font-weight:700}
+.rowx .c{font-size:15px;font-weight:800;text-align:right;white-space:nowrap}
+.rowx .c.pos{color:var(--pos)} .rowx .c.neg{color:var(--neg)}
+.tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;letter-spacing:.02em;flex-shrink:0}
+.tag.sent{background:var(--p-mint);color:var(--pos)} .tag.ready,.tag.open{background:var(--p-blush);color:var(--neg)}
+.tag.later{background:var(--track);color:var(--text2)} .tag.sched{background:var(--p-blue);color:var(--ink)} .tag.skip{background:var(--p-butter);color:var(--butter-ink)}
 
-/* ---------- nav ---------- */
-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(6,11,19,.94);
-  backdrop-filter:blur(14px);border-top:1px solid var(--line);
-  display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:40}
-nav button{flex:1;background:none;border:none;color:var(--faint);font-size:11px;
-  display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;font-family:'JetBrains Mono',monospace;
-  letter-spacing:.06em;text-transform:uppercase}
-nav button.on{color:var(--amber)}
-nav button:hover{color:var(--amber)}
-nav .dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0}
-nav button.on .dot{opacity:1}
+.alert{background:var(--alert);color:var(--on-alert);border-radius:14px;padding:12px 14px;margin:18px 0 14px}
+.alert h4{margin:0 0 2px;font-size:13px;font-weight:800}
+.alert .sub{font-size:11px;opacity:.85;margin-bottom:6px}
+.alert .rowx{border-top:1px solid rgba(255,255,255,.22);padding:8px 0}
+.alert .rowx .b{color:rgba(255,255,255,.85);font-size:11px}
+.alert .note{margin-top:8px;background:rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;line-height:1.4}
+.alert .wbtn{background:#fff;color:#B3261E;border:0;border-radius:999px;padding:0 14px;min-height:38px;font-weight:800;font-size:12px;flex-shrink:0}
+.upc{background:var(--p-butter);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.upc h4{margin:0 0 4px;font-size:12px;font-weight:800;color:var(--butter-ink)}
+.upc .rowx{padding:6px 0}
+.upc .rowx .b{color:var(--butter-ink);font-weight:700}
+.blush{background:var(--p-blush);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.blush h4{margin:0 0 4px;font-size:12px;font-weight:800;color:var(--neg)}
+.blush .rowx{padding:8px 0} .blush .rowx+.rowx{border-top:1px solid rgba(161,43,31,.15)}
+.mintbox{background:var(--p-mint);border-radius:14px;padding:12px 14px;margin:14px 0}
+.mintbox h4{margin:0 0 4px;font-size:12px;font-weight:800;color:var(--pos)}
+.mintbox .rowx{padding:7px 0} .mintbox .rowx+.rowx{border-top:1px solid rgba(30,107,69,.18)}
+.mintbox .rowx .a{font-size:14px;font-weight:500} .mintbox .rowx .c{font-size:13px;font-weight:700}
+.lilacbox{background:var(--p-lilac);border-radius:14px;padding:12px 14px;margin:0 0 14px;font-size:13px;line-height:1.5}
 
-.view{display:none}.view.on{display:block}
-.sec-title{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
-  font-family:'JetBrains Mono',monospace;margin:22px 0 10px}
+.btn{min-height:50px;border:0;border-radius:12px;background:var(--ink);color:var(--on-ink);font-size:15px;font-weight:700;width:100%;
+  display:flex;align-items:center;justify-content:center;text-decoration:none;padding:0 16px}
+.btn:disabled{opacity:.5}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-row .pill-btn{flex:1;min-height:44px;font-size:13px}
+.stack{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.link-btn{background:none;border:0;padding:10px 0;font-size:13px;font-weight:700;text-decoration:underline;color:var(--text2)}
+.link-btn.neg{color:var(--neg)}
 
-/* ---------- forms ---------- */
-label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--faint);font-family:'JetBrains Mono',monospace;margin:12px 0 5px}
-input,textarea,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
-  border-radius:9px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px}
-input:focus,textarea:focus,select:focus{outline:none;border-color:var(--amber)}
-.grid2{display:grid;gap:0 14px}
-@media(min-width:560px){.grid2{grid-template-columns:1fr 1fr}}
+.seg{display:flex;background:var(--track);border-radius:12px;padding:4px;gap:2px}
+.seg button{flex:1;min-height:44px;padding:0 6px;border:0;border-radius:9px;background:transparent;font-size:13px;font-weight:700}
+.seg button.on{background:var(--card)}
 
-/* ---------- modal ---------- */
-.scrim{position:fixed;inset:0;background:rgba(2,5,10,.78);z-index:50;display:none;
-  overflow:auto;padding:20px 12px 40px}
-.scrim.on{display:block}
-.modal{max-width:760px;margin:0 auto;background:var(--panel);border:1px solid var(--line);
-  border-radius:16px;padding:20px}
+.form{display:flex;flex-direction:column;gap:14px}
+.fld label,.fld .lbl{display:block;font-size:12px;color:var(--text3);margin-bottom:6px}
+.fld.key label{color:var(--ink);font-weight:700}
+.fld input,.fld textarea,.fld select{width:100%;min-height:48px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:0 14px;font-size:16px}
+.fld textarea{padding:12px 14px;min-height:84px;resize:vertical;line-height:1.45}
+.fld.key input{border:1.5px solid var(--ink)}
+.fld input:focus,.fld textarea:focus{outline:none;border-color:var(--ink)}
+:root[data-theme="dark"] .fld input{color-scheme:dark}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.check{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;min-height:44px}
+.check input{width:20px;height:20px;accent-color:var(--ink)}
+.search{width:100%;min-height:48px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0 14px;font-size:16px;margin-bottom:10px}
 
-/* ---------- invoice ---------- */
-.inv{background:#fff;color:#14181f;border-radius:10px;padding:34px;font-family:'DM Sans',sans-serif}
-.inv h2{font-size:26px;letter-spacing:-.02em}
-.inv .accent{color:#b57a00}
-.inv-head{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
-  border-bottom:2px solid #14181f;padding-bottom:16px;margin-bottom:22px}
-.inv-lbl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#7b8797;
-  font-family:'JetBrains Mono',monospace;margin-bottom:3px}
+.empty{background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:18px;color:var(--text3);font-size:13px;text-align:center;margin-bottom:12px}
+.disclaimer{color:var(--text3);font-size:12px;line-height:1.5;padding-top:18px}
+.muted{color:var(--text3);font-size:13px;line-height:1.5}
+
+/* chart */
+.bars{height:150px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;align-items:end;border-bottom:1px solid var(--line)}
+.bars .col{border-radius:4px 4px 0 0;background:var(--track);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;min-height:2px}
+.bars .late{background:var(--neg)} .bars .in{background:var(--pos)}
+.blabels{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;margin-top:7px}
+.blabels div{text-align:center;font-size:11px;color:var(--text3);font-weight:500}
+.blabels div.now{color:var(--ink);font-weight:800}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--text2);margin-top:12px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:block}
+
+/* bottom sheets */
+.sheet-scrim{display:none;position:fixed;inset:0;background:var(--scrim);z-index:400}
+.sheet-scrim.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:410;background:var(--bg);border-radius:22px 22px 0 0;
+  padding:10px 18px calc(24px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;transform:translateY(105%);transition:transform .22s ease;
+  max-width:680px;margin:0 auto}
+.sheet:not(.on){visibility:hidden;transition:transform .22s ease,visibility 0s .22s}
+.sheet.on{transform:none}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--border);margin:0 auto 16px}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.sheet-head .t{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.x-btn{min-height:44px;min-width:44px;border:1px solid var(--ink);border-radius:12px;background:transparent;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
+.msg{width:100%;background:var(--cream);border:0;border-radius:16px;padding:14px 16px;font-size:15px;line-height:1.55;min-height:220px;resize:vertical}
+
+/* invoice */
+.inv-wrap{position:fixed;inset:0;z-index:500;background:var(--scrim);overflow:auto;padding:max(16px,env(safe-area-inset-top)) 12px 40px;display:none}
+.inv-wrap.on{display:block}
+.inv-tools{max-width:760px;margin:0 auto 12px;display:flex;gap:8px;flex-wrap:wrap}
+.inv-tools .pill-btn{background:var(--bg)}
+.inv{max-width:760px;margin:0 auto;background:#fff;color:#16181D;border-radius:12px;padding:30px;font-family:'Archivo',Arial,sans-serif}
+.inv h2{font-size:24px;margin:0}
+.inv-head{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:2px solid #16181D;padding-bottom:16px;margin-bottom:22px}
+.inv-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#555B63;margin-bottom:3px}
 .inv table{width:100%;border-collapse:collapse;margin:20px 0}
-.inv th{text-align:left;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#7b8797;
-  font-family:'JetBrains Mono',monospace;border-bottom:1px solid #d6dbe3;padding:0 0 8px}
-.inv td{padding:14px 0;border-bottom:1px solid #eceff4;font-size:14px;vertical-align:top}
-.inv .num{text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
-.inv .total td{border:none;padding-top:16px;font-weight:700;font-size:17px;font-family:'Syne',sans-serif}
-.inv-foot{margin-top:26px;padding-top:16px;border-top:1px solid #d6dbe3;font-size:12px;color:#5b6675}
-.words{font-size:12px;color:#5b6675;font-style:italic;margin-top:4px}
+.inv th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#555B63;border-bottom:1px solid #D9DCD2;padding:0 0 8px;font-weight:600}
+.inv td{padding:14px 0;border-bottom:1px solid #ECEEE7;font-size:14px;vertical-align:top}
+.inv .num{text-align:right;font-variant-numeric:tabular-nums}
+.inv .total td{border:none;padding-top:16px;font-weight:800;font-size:17px}
+.inv-foot{margin-top:24px;padding-top:16px;border-top:1px solid #D9DCD2;font-size:12px;color:#3A3F46}
+.inv .small{font-size:12px;color:#555B63}
 
-.empty{text-align:center;color:var(--faint);padding:44px 16px;font-size:14px}
-.hist{font-size:12px;color:var(--dim);font-family:'JetBrains Mono',monospace;
-  padding:6px 0;border-bottom:1px solid var(--line)}
-.note{background:var(--amber-soft);border:1px solid rgba(240,165,0,.3);border-radius:10px;
-  padding:11px 13px;font-size:12.5px;color:#e3c78a;margin-bottom:16px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:104px;background:var(--amber);
-  color:#04080f;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;z-index:80;
-  opacity:0;pointer-events:none;transition:.25s}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(74px + env(safe-area-inset-top));background:var(--ink);color:var(--on-ink);
+  font-weight:700;font-size:13px;padding:12px 18px;border-radius:999px;z-index:900;opacity:0;pointer-events:none;transition:opacity .25s;
+  max-width:calc(100vw - 32px);text-align:center}
 .toast.on{opacity:1}
+.busy{opacity:.6;pointer-events:none}
 
+@media(min-width:700px){ .pg-big{font-size:44px} }
 @media print{
-  body{background:#fff;padding:0}
-  .scrim{position:static;background:none;padding:0;display:block}
-  .modal{border:none;padding:0;max-width:none;background:none}
-  .noprint,nav,header,.view{display:none!important}
-  .inv{padding:0;border-radius:0}
+  body{background:#fff}
+  body.printing > *:not(.inv-wrap){display:none!important}
+  .inv-wrap{position:static;background:none;padding:0;display:block}
+  .inv-tools{display:none}
+  .inv{padding:0;border-radius:0;max-width:none}
 }
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-
-/* ---------- mobile / installed-app overrides ---------- */
-header{padding-top:max(26px, calc(env(safe-area-inset-top) + 16px))}
-button{min-height:42px}
-input,textarea,select{font-size:16px}          /* below 16px iOS zooms the page on focus */
-nav button{min-height:48px}
-body{overscroll-behavior-y:contain}
-.scrim{padding-top:max(20px, env(safe-area-inset-top))}
-::-webkit-scrollbar{width:0;height:0}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 
-<div class="wrap">
-  <header>
-    <div class="brand"><h1>Renewal Desk</h1><span>R2R Tutorials</span></div>
-    <div class="sub" id="today"></div>
-  </header>
+<header class="bar">
+  <button class="menu-btn" aria-label="Open menu" onclick="menu(true)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="bar-brand" href="#today">R2R</a>
+  <button class="pill-btn" id="theme-btn" onclick="toggleTheme()">Dark mode</button>
+</header>
 
-  <!-- ============ LEDGER ============ -->
-  <section class="view on" id="v-ledger">
-    <div class="stats">
-      <div class="stat"><div class="k">Annual book</div><div class="v mono" id="s-book">—</div></div>
-      <div class="stat hot"><div class="k">Due ≤ 30 days</div><div class="v mono" id="s-due">—</div></div>
-      <div class="stat"><div class="k">Overdue</div><div class="v mono" id="s-over">—</div></div>
-      <div class="stat"><div class="k">Collected FY</div><div class="v mono" id="s-coll">—</div></div>
-    </div>
-    <div class="sec-title">Upcoming renewals</div>
-    <div id="list"></div>
-  </section>
-
-  <!-- ============ CLIENTS ============ -->
-  <section class="view" id="v-clients">
-    <div class="note">Editing a client here changes future renewals only. Past receipts stay untouched.</div>
-    <div class="acts" style="margin-bottom:4px">
-      <button class="primary" onclick="openEdit(null)">Add client</button>
-      <button id="btn-contacts" onclick="pickContacts()">Import from contacts</button>
-      <button onclick="document.getElementById('vcf').click()">Import .vcf file</button>
-      <input type="file" id="vcf" accept=".vcf,text/vcard" multiple style="display:none" onchange="importVcf(event)">
-    </div>
-    <div class="meta" id="contacts-hint" style="margin-top:8px"></div>
-    <div class="sec-title">All clients</div>
-    <div id="clist"></div>
-  </section>
-
-  <!-- ============ RECEIPTS ============ -->
-  <section class="view" id="v-receipts">
-    <div class="sec-title">Payment history</div>
-    <div id="rlist"></div>
-  </section>
-
-  <!-- ============ SETTINGS ============ -->
-  <section class="view" id="v-settings">
-    <div class="note">Data lives in this browser only. Export a backup before clearing site data or switching devices.</div>
-    <div class="card">
-      <div class="sec-title" style="margin-top:0">Invoice details</div>
-      <label>Your name</label><input id="cfg-name">
-      <label>Business name</label><input id="cfg-biz">
-      <label>Email</label><input id="cfg-email">
-      <label>Phone</label><input id="cfg-phone">
-      <label>Address</label><textarea id="cfg-addr" rows="2"></textarea>
-      <label>Payment instructions (UPI / bank)</label><textarea id="cfg-pay" rows="3"></textarea>
-      <label>Invoice prefix</label><input id="cfg-prefix">
-      <div class="acts"><button class="primary" onclick="saveCfg()">Save details</button></div>
-    </div>
-    <div class="card" id="install-card">
-      <div class="sec-title" style="margin-top:0">Install on this phone</div>
-      <div class="meta" id="install-hint"></div>
-      <div class="acts" id="install-acts" style="display:none"><button class="primary" onclick="doInstall()">Add to home screen</button></div>
-    </div>
-    <div class="card">
-      <div class="sec-title" style="margin-top:0">Calendar feed</div>
-      <div class="meta" style="margin-bottom:12px">Subscribe once, then your calendar re-reads this file on its own. Adding, editing or removing a client here reaches every device the next time it refreshes.</div>
-      <div class="acts" style="margin-bottom:14px">
-        <button class="primary" onclick="publishFeed()">Download renewals.ics</button>
-        <button onclick="copyFeedUrl()">Copy feed URL</button>
-      </div>
-      <div class="meta mono" id="feed-url" style="word-break:break-all;font-size:11px;color:var(--amber)"></div>
-      <div class="meta" style="margin-top:14px">
-        <strong style="color:var(--ink)">Each time you update it</strong><br>
-        1. Tap Download renewals.ics above.<br>
-        2. Upload it to your GitHub repo root, replacing the old file.<br>
-        3. Nothing else. Subscribers pick it up within a day.
-      </div>
-      <div class="meta" style="margin-top:14px">
-        <strong style="color:var(--ink)">Subscribing, once per device</strong><br>
-        iPhone: Settings → Apps → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar → paste the URL.<br>
-        Google Calendar: on desktop, Other calendars → + → From URL → paste.
-      </div>
-    </div>
-    <div class="card">
-      <div class="sec-title" style="margin-top:0">One-off calendar file</div>
-      <div class="meta" style="margin-bottom:12px">Adds fixed entries to the calendar on this device only. Useful before the feed is live — but these do not update later.</div>
-      <div class="acts"><button onclick="allToCalendar()">Export all renewals</button></div>
-    </div>
-    <div class="card">
-      <div class="sec-title" style="margin-top:0">Backup</div>
-      <div class="acts">
-        <button onclick="exportData()">Export backup</button>
-        <button onclick="document.getElementById('imp').click()">Import backup</button>
-        <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
-        <button class="danger ghost" onclick="wipe()">Erase everything</button>
-      </div>
-    </div>
-  </section>
-</div>
-
-<nav>
-  <button class="on" data-v="ledger" onclick="go('ledger')"><span class="dot"></span>Ledger</button>
-  <button data-v="clients" onclick="go('clients')"><span class="dot"></span>Clients</button>
-  <button data-v="receipts" onclick="go('receipts')"><span class="dot"></span>Receipts</button>
-  <button data-v="settings" onclick="go('settings')"><span class="dot"></span>Setup</button>
+<nav class="drawer" id="drawer" aria-label="Main menu">
+  <div class="side-brand"><b>R2R</b><span>Renewal Desk</span></div>
+  <div class="side-nav" id="side-nav"></div>
+  <div class="side-foot">
+    <span class="updated" id="sync-note">On this phone</span>
+  </div>
 </nav>
+<div class="scrim menu" onclick="menu(false)"></div>
 
-<!-- modals -->
-<div class="scrim" id="scrim-edit"><div class="modal" id="edit-body"></div></div>
-<div class="scrim" id="scrim-import"><div class="modal" id="import-body"></div></div>
-<div class="scrim" id="scrim-collect"><div class="modal" id="collect-body"></div></div>
-<div class="scrim" id="scrim-inv"><div class="modal">
-  <div class="noprint acts" style="margin-bottom:14px">
-    <button class="primary" onclick="window.print()">Print / Save PDF</button>
-    <button onclick="copyInvText()">Copy as text</button>
-    <button class="ghost" onclick="close_('scrim-inv')">Close</button>
+<main class="main" id="app"></main>
+
+<div class="sheet-scrim" id="sheet-scrim" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+
+<div class="inv-wrap" id="inv-wrap">
+  <div class="inv-tools">
+    <button class="pill-btn" onclick="printInvoice()">Print / Save PDF</button>
+    <button class="pill-btn" onclick="copy(lastInvText,'Invoice copied')">Copy as text</button>
+    <button class="pill-btn" onclick="closeInvoice()">Close</button>
   </div>
   <div id="inv-body"></div>
-</div></div>
-<div class="toast" id="toast"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="importBackup(event)">
 
 <script>
-/* ---------------- storage (survives on a real host, degrades gracefully) ---------------- */
+/* ===== R2R core — shared, unchanged, by the app (index.html) and the autopilot (Code.gs) ===== */
+var R2R = (function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function parse(s) { var p = String(s).split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); }
+  function iso(d) { return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+  function addDays(s, n) { var d = parse(s); d.setUTCDate(d.getUTCDate() + n); return iso(d); }
+  function addYears(s, n) {
+    var p = String(s).split('-').map(Number);
+    var last = new Date(Date.UTC(p[0] + n, p[1], 0)).getUTCDate();      // 29 Feb → 28 Feb
+    return (p[0] + n) + '-' + pad(p[1]) + '-' + pad(Math.min(p[2], last));
+  }
+  /* whole days from a to b (positive when b is later) */
+  function diff(a, b) { return Math.round((parse(b) - parse(a)) / 864e5); }
+  function fmt(s) { var d = parse(s); return pad(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+  function fmtDM(s) { var d = parse(s); return pad(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()]; }
+  /* Indian financial year, April–March, e.g. "26-27" */
+  function fyOf(s) { var p = String(s).split('-').map(Number); var y = p[1] >= 4 ? p[0] : p[0] - 1;
+    return String(y).slice(2) + '-' + String(y + 1).slice(2); }
+  function fyStart(fy) { return '20' + fy.slice(0, 2) + '-04-01'; }
+  function fyEnd(fy) { return '20' + fy.slice(3) + '-03-31'; }
+  function prevFy(fy) { var a = +fy.slice(0, 2) - 1; return pad(a) + '-' + pad(a + 1); }
+  /* ₹ with Indian grouping: 165000 → ₹1,65,000 */
+  function inr(n) {
+    n = Math.round(+n || 0); var neg = n < 0, s = String(Math.abs(n));
+    var out = s.length > 3 ? s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + s.slice(-3) : s;
+    return (neg ? '-' : '') + '₹' + out;
+  }
+  function lakh(n) { return n >= 100000 ? '₹' + (n / 100000).toFixed(2).replace(/\.?0+$/, '') + ' L' : inr(n); }
+  function words(n) {
+    n = Math.round(n); if (n === 0) return 'Zero';
+    var o = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve',
+      'Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+    var t = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+    function two(x) { return x < 20 ? o[x] : t[Math.floor(x / 10)] + (x % 10 ? ' ' + o[x % 10] : ''); }
+    function three(x) { return (x > 99 ? o[Math.floor(x / 100)] + ' Hundred' + (x % 100 ? ' ' : '') : '') + (x % 100 ? two(x % 100) : ''); }
+    var out = '', cr = Math.floor(n / 1e7); n %= 1e7; var la = Math.floor(n / 1e5); n %= 1e5;
+    var th = Math.floor(n / 1e3); n %= 1e3;
+    if (cr) out += three(cr) + ' Crore '; if (la) out += three(la) + ' Lakh ';
+    if (th) out += three(th) + ' Thousand '; if (n) out += three(n);
+    return out.trim();
+  }
+
+  var DEF_CFG = { name: 'Manuel Pinto', biz: 'R2R Tutorials', email: 'learn2earninvesting@gmail.com',
+    phone: '', addr: '', upi: '', pay: '', prefix: 'R2R', live: false };
+
+  function normalize(db) {
+    db = db || {};
+    db.clients = db.clients || []; db.receipts = db.receipts || [];
+    db.cfg = Object.assign({}, DEF_CFG, db.cfg || {}); db.seq = db.seq || {}; db.meta = db.meta || {};
+    db.clients.forEach(function (c) {
+      c.status = c.status || 'active'; c.email = c.email || ''; c.phone = c.phone || ''; c.note = c.note || '';
+      c.amount = +c.amount || 0; ensure(c);
+    });
+    return db;
+  }
+
+  /* each renewal ("cycle") remembers what has been sent for that due date */
+  function newCycle(due) { return { due: due, headsup: null, invoice: null, invNo: null, wa: [], waHead: null }; }
+  function ensure(c) { if (!c.cycle || c.cycle.due !== c.due) c.cycle = newCycle(c.due); c.cycle.wa = c.cycle.wa || []; return c.cycle; }
+
+  function nextNo(db, date) {
+    var fy = fyOf(date); db.seq[fy] = (db.seq[fy] || 0) + 1;
+    return (db.cfg.prefix || 'R2R') + '/' + fy + '/' + String(db.seq[fy]).padStart(3, '0');
+  }
+  /* first anniversary of `anchor` on or after `today` */
+  function nextAnniv(anchor, today) {
+    var y = +today.slice(0, 4), a = String(anchor), s = addYears(a, y - +a.slice(0, 4));
+    if (s < today) s = addYears(s, 1);
+    if (s < a) s = a;
+    return s;
+  }
+
+  /* Where a client stands right now. phase:
+     lapsed | upcoming (due later) | due (today) | ready (WhatsApp reminder to send) | waiting (next reminder later) | call (3 sent, still unpaid) */
+  var MAX_WA = 3, WA_GAP = 7, HEADSUP_DAYS = 14, INVOICE_GRACE = 14;
+  function state(c, today) {
+    if (c.status !== 'active') return { phase: 'lapsed' };
+    var cyc = ensure(c), d = diff(today, c.due), sent = cyc.wa.length;
+    if (d > 0) {
+      var headsOn = addDays(c.due, -HEADSUP_DAYS);
+      return { phase: 'upcoming', days: d, headsOn: headsOn,
+        waHead: !c.email && d <= HEADSUP_DAYS && !cyc.waHead };          // no email on file → heads-up by WhatsApp
+    }
+    if (d === 0 && sent === 0) return { phase: 'due', days: 0, sent: 0, next: 1, nextOn: addDays(c.due, WA_GAP) };
+    if (sent >= MAX_WA) {
+      var callOn = addDays(cyc.wa[MAX_WA - 1], WA_GAP);
+      return { phase: today >= callOn ? 'call' : 'waiting', days: d, sent: sent, next: null, nextOn: callOn };
+    }
+    var nextOn = sent === 0 ? addDays(c.due, WA_GAP) : addDays(cyc.wa[sent - 1], WA_GAP);
+    return { phase: today >= nextOn ? 'ready' : 'waiting', days: d, sent: sent, next: sent + 1, nextOn: nextOn };
+  }
+
+  function uid(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  var EDITABLE = ['name', 'email', 'phone', 'amount', 'anchor', 'due', 'note'];
+  var CFG_KEYS = ['name', 'biz', 'email', 'phone', 'addr', 'upi', 'pay', 'prefix'];
+
+  /* Every change to the books goes through here, on the phone and in the autopilot alike. */
+  function apply(db, op, a, today) {
+    a = a || {};
+    var c = a.id ? db.clients.filter(function (x) { return x.id === a.id; })[0] : null;
+    if (['edit', 'remove', 'status', 'pay', 'wa', 'waUndo'].indexOf(op) >= 0 && !c) throw new Error('Client not found');
+    switch (op) {
+      case 'add': {
+        var anchor = a.anchor || today;
+        var n = { id: a.newId || uid('c'), name: String(a.name || '').trim(), email: String(a.email || '').trim(),
+          phone: String(a.phone || '').trim(), amount: +a.amount || 0, anchor: anchor, note: a.note || '', status: 'active' };
+        if (!n.name) throw new Error('Name is required');
+        n.due = a.due || nextAnniv(anchor, today);
+        db.clients.push(n); ensure(n);
+        if (a.paidNow) return apply(db, 'pay', { id: n.id, amount: n.amount, date: anchor, joining: true }, today);
+        return n;
+      }
+      case 'edit':
+        EDITABLE.forEach(function (k) { if (k in a) c[k] = k === 'amount' ? (+a[k] || 0) : String(a[k]).trim(); });
+        ensure(c); return c;
+      case 'remove':
+        db.clients = db.clients.filter(function (x) { return x.id !== a.id; }); return null;
+      case 'status':
+        c.status = a.status === 'lapsed' ? 'lapsed' : 'active';
+        if (c.status === 'active' && c.due < today && a.fresh) { c.due = nextAnniv(c.anchor, today); ensure(c); }
+        return c;
+      case 'pay': {
+        var date = a.date || today, cyc = ensure(c);
+        var period = a.joining ? c.anchor : c.due;
+        var r = { id: uid('r'), clientId: c.id, name: c.name, amount: +a.amount || c.amount, date: date,
+          no: cyc.invNo || nextNo(db, date), period: period };
+        db.receipts.push(r);
+        c.due = addYears(period, 1); c.status = 'active'; ensure(c);
+        return r;
+      }
+      case 'wa': {
+        var cy = ensure(c);
+        if (a.kind === 'headsup') cy.waHead = today; else if (cy.wa.length < MAX_WA) cy.wa.push(today);
+        return c;
+      }
+      case 'waUndo': { var cz = ensure(c); if (cz.wa.length) cz.wa.pop(); else cz.waHead = null; return c; }
+      case 'cfg':
+        CFG_KEYS.forEach(function (k) { if (k in a) db.cfg[k] = String(a[k]); }); return db.cfg;
+      case 'live':
+        db.cfg.live = !!a.live; return db.cfg;
+      default: throw new Error('Unknown action: ' + op);
+    }
+  }
+
+  /* WhatsApp text, written as Manuel */
+  function payLine(cfg) {
+    if (cfg.upi) return 'You can pay by UPI to ' + cfg.upi + '.';
+    if (cfg.pay) return 'Payment details:\n' + cfg.pay;
+    return '';
+  }
+  function message(kind, tone, c, cfg) {
+    var first = String(c.name).split(' ')[0], sign = String(cfg.name || 'Manuel').split(' ')[0];
+    var amt = inr(c.amount), due = fmt(c.due), pay = payLine(cfg), biz = cfg.biz || 'R2R Tutorials';
+    var emailed = c.email && c.cycle && c.cycle.invoice && c.cycle.invoice !== 'skipped';
+    if (kind === 'headsup') {
+      return 'Hi ' + first + ', hope you’re doing well.\n\nA quick note that your ' + biz + ' subscription renews on ' + due +
+        '. The fee for the coming year is ' + amt + '.' + (pay ? '\n\n' + pay : '') +
+        '\n\nDo let me know if you’d like to change anything about your plan.\n\n— ' + sign;
+    }
+    if (tone === 'Short') {
+      return 'Hi ' + first + ', quick reminder: ' + biz + ' renewal ' + amt + ' (due ' + fmtDM(c.due) + ').' +
+        (cfg.upi ? ' UPI: ' + cfg.upi + '.' : '') + ' Thanks! — ' + sign;
+    }
+    if (tone === 'Firm') {
+      return 'Hi ' + first + ', following up on your ' + biz + ' renewal of ' + amt + ', due since ' + due + '.\n\n' +
+        'Could you clear it this week?' + (pay ? ' ' + pay : '') + (emailed ? ' The invoice is in your email.' : '') +
+        '\n\nIf you’ve decided not to continue, just tell me and I’ll close your account.\n\n— ' + sign;
+    }
+    return 'Hi ' + first + ', hope you’re doing well.\n\nA gentle reminder that your ' + biz + ' renewal of ' + amt +
+      ' was due on ' + due + '.' + (emailed ? ' I’ve emailed the invoice.' : '') + (pay ? ' ' + pay : '') +
+      '\n\nDo let me know if you’d like to continue or if anything has changed.\n\n— ' + sign;
+  }
+  function waLink(phone, text) {
+    var d = String(phone || '').replace(/\D/g, '');
+    if (d.length === 10) d = '91' + d;
+    if (d.length === 11 && d[0] === '0') d = '91' + d.slice(1);
+    return 'https://wa.me/' + (d || '') + '?text=' + encodeURIComponent(text);
+  }
+
+  return { MON: MON, parse: parse, iso: iso, addDays: addDays, addYears: addYears, diff: diff, fmt: fmt, fmtDM: fmtDM,
+    fyOf: fyOf, fyStart: fyStart, fyEnd: fyEnd, prevFy: prevFy, inr: inr, lakh: lakh, words: words,
+    DEF_CFG: DEF_CFG, normalize: normalize, ensure: ensure, newCycle: newCycle, nextNo: nextNo, nextAnniv: nextAnniv,
+    state: state, apply: apply, message: message, waLink: waLink, uid: uid,
+    MAX_WA: MAX_WA, WA_GAP: WA_GAP, HEADSUP_DAYS: HEADSUP_DAYS, INVOICE_GRACE: INVOICE_GRACE };
+})();
+
+
+/* ================= state & storage ================= */
+const KEY_DB = 'r2r_desk_v4', KEY_OLD = 'r2r_desk_v3', KEY_CONN = 'r2r_desk_conn', KEY_THEME = 'r2r_desk_theme';
 const mem = {};
 const store = {
   get(k){ try{ return localStorage.getItem(k); }catch(e){ return mem[k] ?? null; } },
-  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } }
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){ delete mem[k]; } }
 };
+const S = { db:null, conn:null, synced:null, tone:'Gentle', fySel:null, filter:'All', q:'' };
 
-/* paid2026: true  = the 2026 renewal is collected, next due is 2027
-   paid2026: false = the 2026 renewal is outstanding
-   paid2026: null  = the 2026 renewal has not fallen due yet          */
+const pad2 = n => String(n).padStart(2,'0');
+const today = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const first = n => String(n||'').split(' ')[0];
+const byId = id => S.db.clients.find(c => c.id === id);
+
+/* The starting list, used only if this phone has never run the Renewal Desk.
+   paid2026: true = 2026 renewal collected · false = outstanding · null = not yet due */
 const SEED = [
   {name:'Brian',             amount:20000, anchor:'2024-01-07', paid2026:true},
   {name:'Vinod Mane',        amount:15000, anchor:'2023-01-20', paid2026:true},
@@ -293,600 +477,668 @@ const SEED = [
   {name:'Swayam Gupta',      amount:15000, anchor:'2023-09-01', paid2026:null},
   {name:'Swapan Kumar Paul', amount:10000, anchor:'2025-10-04', paid2026:null}
 ];
-const DEF_CFG = {
-  name:'Manuel Pinto', biz:'R2R Tutorials', email:'learn2earninvesting@gmail.com',
-  phone:'', addr:'', prefix:'R2R',
-  pay:'UPI: \nBank: \nAccount no: \nIFSC: '
-};
-
-let DB = {clients:[], receipts:[], cfg:{...DEF_CFG}, seq:{}};
-
-function load(){
-  const raw = store.get('r2r_desk_v3');
-  if(raw){ try{ DB = JSON.parse(raw); }catch(e){ seed(); return; } }
-  else seed();
-  DB.cfg = {...DEF_CFG, ...(DB.cfg||{})};
-  DB.receipts ||= []; DB.seq ||= {};
-}
 function seed(){
-  DB = {clients:[], receipts:[], cfg:{...DEF_CFG}, seq:{}};
-
-  // build 2026 receipts in date order so invoice numbers run chronologically
-  const paid = SEED.filter(c=>c.paid2026===true)
-    .map(c=>({...c, on:renewalIn(c.anchor, 2026)}))
-    .sort((a,b)=>a.on.localeCompare(b.on));
-
-  SEED.forEach((c,i)=>{
-    const r2026 = renewalIn(c.anchor, 2026);
-    DB.clients.push({
-      id:'c'+i, name:c.name, amount:c.amount, anchor:c.anchor,
-      due: c.paid2026===false ? r2026 : (c.paid2026===true ? bump(r2026) : r2026),
-      email:'', phone:'', note:''
-    });
+  const db = R2R.normalize({});
+  const in2026 = a => { const y = Math.max(2026, +a.slice(0,4)); return R2R.addYears(a, y - +a.slice(0,4)); };
+  SEED.forEach((s,i) => {
+    const r = in2026(s.anchor);
+    db.clients.push({ id:'c'+i, name:s.name, amount:s.amount, anchor:s.anchor,
+      due: s.paid2026===true ? R2R.addYears(r,1) : r, email:'', phone:'', note:'', status:'active' });
   });
-
-  paid.forEach(c=>{
-    const cl = DB.clients.find(x=>x.name===c.name);
-    DB.receipts.push({
-      id:'r'+c.name.replace(/\W/g,''), clientId:cl.id, name:c.name,
-      amount:c.amount, date:c.on, no:nextNo(parse(c.on))
-    });
+  SEED.filter(s=>s.paid2026===true).map(s=>({...s, on:in2026(s.anchor)})).sort((a,b)=>a.on<b.on?-1:1).forEach(s => {
+    const c = db.clients.find(x=>x.name===s.name);
+    db.receipts.push({ id:'r'+c.id, clientId:c.id, name:c.name, amount:s.amount, date:s.on, no:R2R.nextNo(db, s.on), period:s.on });
   });
-  save();
+  return R2R.normalize(db);
 }
-/* the anniversary of `anchor` falling in calendar year `y` */
-function renewalIn(anchor, y){
-  const a=parse(anchor);
-  return iso(new Date(Math.max(y, a.getFullYear()), a.getMonth(), a.getDate()));
+/* carry over the list saved by the previous version of the app on this phone */
+function migrate(old){
+  const db = { clients:[], receipts: old.receipts || [], cfg: Object.assign({}, old.cfg||{}), seq: old.seq || {}, meta:{} };
+  (old.clients||[]).forEach(c => {
+    const n = { id:c.id, name:c.name, amount:+c.amount||0, anchor:c.anchor, due:c.due, email:c.email||'', phone:c.phone||'', note:c.note||'', status:'active' };
+    n.cycle = R2R.newCycle(n.due); if (c.pendingNo) n.cycle.invNo = c.pendingNo;
+    db.clients.push(n);
+  });
+  delete db.cfg.live;
+  // the old app shipped a blank "UPI: / Bank: / Account no: / IFSC:" template: keep only lines you filled in
+  const lines = String(db.cfg.pay || '').split('\n').map(l => l.trim()).filter(l => l && !/^[^:]+:\s*$/.test(l));
+  const upiLine = lines.find(l => /^upi\s*:/i.test(l));
+  if (upiLine && !db.cfg.upi) db.cfg.upi = upiLine.replace(/^upi\s*:\s*/i, '');
+  db.cfg.pay = lines.filter(l => l !== upiLine).join('\n');
+  return R2R.normalize(db);
 }
-function save(){ store.set('r2r_desk_v3', JSON.stringify(DB)); }
-
-/* ---------------- dates ---------------- */
-const today = ()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; };
-const parse = s=>{ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-const iso = d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const fmt = s=>{ const d=parse(s); return `${String(d.getDate()).padStart(2,'0')} ${MON[d.getMonth()]} ${d.getFullYear()}`; };
-const days = s=>Math.round((parse(s)-today())/864e5);
-
-function nextAnniv(anchor){
-  const a=parse(anchor), t=today();
-  let d=new Date(t.getFullYear(), a.getMonth(), a.getDate());
-  if(d<t) d=new Date(t.getFullYear()+1, a.getMonth(), a.getDate());
-  return iso(d);
-}
-function bump(s){ const d=parse(s); return iso(new Date(d.getFullYear()+1, d.getMonth(), d.getDate())); }
-
-/* Indian financial year label for a date: Apr–Mar */
-function fyOf(d){
-  const y = d.getMonth()>=3 ? d.getFullYear() : d.getFullYear()-1;
-  return `${String(y).slice(2)}-${String(y+1).slice(2)}`;
-}
-const inr = n=>'₹'+Number(n).toLocaleString('en-IN');
-const K = n=>n>=100000 ? '₹'+(n/100000).toFixed(2)+'L' : inr(n);
-
-/* ---------------- render ---------------- */
-function render(){
-  const t=today(), fy=fyOf(t);
-  document.getElementById('today').textContent =
-    `${fmt(iso(t))} · FY ${fy} · ${DB.clients.length} active clients`;
-
-  const book = DB.clients.reduce((s,c)=>s+ +c.amount, 0);
-  const soon = DB.clients.filter(c=>days(c.due)>=0 && days(c.due)<=30);
-  const over = DB.clients.filter(c=>days(c.due)<0);
-  const coll = DB.receipts.filter(r=>fyOf(parse(r.date))===fy).reduce((s,r)=>s+ +r.amount,0);
-
-  document.getElementById('s-book').textContent = K(book);
-  document.getElementById('s-due').textContent  = soon.length ? K(soon.reduce((s,c)=>s+ +c.amount,0)) : '—';
-  document.getElementById('s-over').textContent = over.length ? K(over.reduce((s,c)=>s+ +c.amount,0)) : '—';
-  document.getElementById('s-coll').textContent = K(coll);
-
-  const sorted=[...DB.clients].sort((a,b)=>days(a.due)-days(b.due));
-  document.getElementById('list').innerHTML = sorted.length ? sorted.map(c=>{
-    const n=days(c.due);
-    const cls = n<0 ? 'p-over' : n<=30 ? 'p-soon' : 'p-ok';
-    const txt = n<0 ? `${-n} days overdue` : n===0 ? 'Due today' : `in ${n} days`;
-    return `<div class="card">
-      <div class="row">
-        <div><div class="name">${esc(c.name)}</div>
-          <div class="meta">Renews ${fmt(c.due)} · client since ${fmt(c.anchor)}</div>
-          <span class="pill ${cls}">${txt}</span></div>
-        <div class="amt">${inr(c.amount)}</div>
-      </div>
-      <div class="acts">
-        <button class="primary" onclick="invoice('${c.id}')">Invoice</button>
-        <button onclick="collect('${c.id}')">Mark collected</button>
-        <button class="ghost" onclick="remind('${c.id}')">Copy reminder</button>
-        <button class="ghost" onclick="toCalendar('${c.id}')">Add to calendar</button>
-      </div></div>`;
-  }).join('') : `<div class="empty">No clients yet. Add one from the Clients tab.</div>`;
-
-  document.getElementById('clist').innerHTML = DB.clients.map(c=>`
-    <div class="card"><div class="row">
-      <div><div class="name">${esc(c.name)}</div>
-        <div class="meta">${inr(c.amount)}/yr · ${esc(c.email||'no email')}</div></div>
-      <div class="acts" style="margin:0">
-        <button onclick="openEdit('${c.id}')">Edit</button>
-        <button class="danger ghost" onclick="del('${c.id}')">Remove</button>
-      </div></div></div>`).join('') || `<div class="empty">No clients yet.</div>`;
-
-  const rs=[...DB.receipts].sort((a,b)=>b.date.localeCompare(a.date));
-  document.getElementById('rlist').innerHTML = rs.length
-    ? rs.map(r=>`<div class="hist">${fmt(r.date)} &nbsp;·&nbsp; ${esc(r.name)} &nbsp;·&nbsp; ${inr(r.amount)} &nbsp;·&nbsp; <span style="color:var(--amber)">${esc(r.no)}</span></div>`).join('')
-    : `<div class="empty">Nothing collected yet. Use “Mark collected” on the ledger.</div>`;
-
-  for(const k of ['name','biz','email','phone','addr','pay','prefix'])
-    document.getElementById('cfg-'+k).value = DB.cfg[k] ?? '';
-}
-const esc = s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-
-/* ---------------- actions ---------------- */
-function go(v){
-  document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));
-  document.getElementById('v-'+v).classList.add('on');
-  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
-  window.scrollTo(0,0);
-}
-function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on');
-  setTimeout(()=>t.classList.remove('on'),1900); }
-function close_(id){ document.getElementById(id).classList.remove('on'); }
-
-function nextNo(d){
-  const fy=fyOf(d);
-  DB.seq[fy]=(DB.seq[fy]||0)+1;
-  return `${DB.cfg.prefix||'R2R'}/${fy}/${String(DB.seq[fy]).padStart(3,'0')}`;
-}
-
-function collect(id){
-  const c=DB.clients.find(x=>x.id===id); if(!c) return;
-  document.getElementById('collect-body').innerHTML=`
-    <h2 style="font-size:19px">Record payment</h2>
-    <div class="meta" style="margin-top:6px">${esc(c.name)} · renewal due ${fmt(c.due)}</div>
-    <div class="grid2">
-      <div><label>Amount received (₹)</label><input id="k-amt" type="number" inputmode="numeric" value="${c.amount}"></div>
-      <div><label>Date received</label><input id="k-date" type="date" value="${iso(today())}"></div>
-    </div>
-    <div class="acts" style="margin-top:18px">
-      <button class="primary" onclick="doCollect('${c.id}')">Record payment</button>
-      <button class="ghost" onclick="close_('scrim-collect')">Cancel</button>
-    </div>`;
-  document.getElementById('scrim-collect').classList.add('on');
-  setTimeout(()=>document.getElementById('k-amt').focus(),80);
-}
-
-function doCollect(id){
-  const c=DB.clients.find(x=>x.id===id); if(!c) return;
-  const when=document.getElementById('k-date').value;
-  const amt=document.getElementById('k-amt').value;
-  if(!when) return toast('Pick the date it was received');
-  if(amt===''||isNaN(+amt)) return toast('Enter the amount received');
-  const no = c.pendingNo || nextNo(parse(when));
-  DB.receipts.push({id:'r'+Date.now(), clientId:c.id, name:c.name, amount:+amt, date:when, no});
-  delete c.pendingNo;
-  c.due = bump(c.due);
-  save(); render(); close_('scrim-collect');
-  toast(`Logged ${no} · next renewal ${fmt(c.due)}`);
-}
-
-function del(id){
-  const c=DB.clients.find(x=>x.id===id);
-  if(!confirm(`Remove ${c.name}? Their past receipts are kept.`)) return;
-  DB.clients=DB.clients.filter(x=>x.id!==id); save(); render();
-}
-
-function openEdit(id){
-  const c = id ? DB.clients.find(x=>x.id===id) : {name:'',amount:15000,anchor:iso(today()),due:iso(today()),email:'',phone:'',note:''};
-  document.getElementById('edit-body').innerHTML=`
-    <h2 style="font-size:19px">${id?'Edit client':'Add client'}</h2>
-    ${!id && canPick ? `<div class="acts" style="margin:12px 0 0"><button onclick="fillFromContact()">Pick from contacts</button></div>` : ''}
-    <div class="grid2">
-      <div><label>Name</label><input id="e-name" value="${esc(c.name)}"></div>
-      <div><label>Annual fee (₹)</label><input id="e-amt" type="number" value="${c.amount}"></div>
-      <div><label>Client since</label><input id="e-anchor" type="date" value="${c.anchor}"></div>
-      <div><label>Next renewal</label><input id="e-due" type="date" value="${c.due}"></div>
-      <div><label>Email</label><input id="e-email" value="${esc(c.email)}"></div>
-      <div><label>Phone</label><input id="e-phone" value="${esc(c.phone)}"></div>
-    </div>
-    <label>Service description on invoice</label>
-    <input id="e-note" value="${esc(c.note)}" placeholder="Annual personal finance tutoring programme">
-    <div class="acts" style="margin-top:18px">
-      <button class="primary" onclick="saveClient('${id||''}')">Save</button>
-      <button class="ghost" onclick="close_('scrim-edit')">Cancel</button>
-    </div>`;
-  document.getElementById('scrim-edit').classList.add('on');
-}
-function saveClient(id){
-  const g=k=>document.getElementById('e-'+k).value;
-  if(!g('name').trim()) return toast('Name is required');
-  const data={name:g('name').trim(), amount:+g('amt')||0, anchor:g('anchor'),
-    due:g('due'), email:g('email').trim(), phone:g('phone').trim(), note:g('note').trim()};
-  if(id){ Object.assign(DB.clients.find(x=>x.id===id), data); save(); render(); close_('scrim-edit'); toast('Saved'); }
-  else {
-    const c={id:'c'+Date.now(), ...data};
-    DB.clients.push(c); save(); render(); close_('scrim-edit'); toast('Client added');
-    if(confirm(`Add ${c.name}'s yearly renewal reminder to your calendar?`)) toCalendar(c.id);
+function load(){
+  const raw = store.get(KEY_DB);
+  if (raw) { try { S.db = R2R.normalize(JSON.parse(raw)); } catch(e) { S.db = null; } }
+  if (!S.db) {
+    const old = store.get(KEY_OLD);
+    if (old) { try { S.db = migrate(JSON.parse(old)); } catch(e) { S.db = null; } }
   }
+  if (!S.db) S.db = seed();
+  try { S.conn = JSON.parse(store.get(KEY_CONN) || 'null'); } catch(e) { S.conn = null; }
+  persist();
+}
+function persist(){ store.set(KEY_DB, JSON.stringify(S.db)); }
+
+/* ================= talking to the autopilot ================= */
+async function call(op, args){
+  if (!S.conn) {
+    if (['live','test','run'].includes(op)) throw new Error('Connect the autopilot first (Setup).');
+    const r = R2R.apply(S.db, op, args, today()); persist(); return r;
+  }
+  let res;
+  try {
+    res = await fetch(S.conn.url, { method:'POST', body: JSON.stringify({ key:S.conn.key, op, args }) });
+  } catch(e) { throw new Error('No connection. Check your signal and try again.'); }
+  const j = await res.json().catch(()=>({ ok:false, error:'The autopilot sent an unreadable reply.' }));
+  if (!j.ok) throw new Error(j.error || 'Something went wrong');
+  S.db = R2R.normalize(j.db); S.synced = new Date(); persist();
+  return j.result;
+}
+async function pull(silent){
+  if (!S.conn) return;
+  try {
+    const res = await fetch(`${S.conn.url}?a=get&key=${encodeURIComponent(S.conn.key)}`);
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error);
+    S.db = R2R.normalize(j.db); S.synced = new Date(); persist(); render();
+  } catch(e) { if (!silent) toast('Could not reach the autopilot. Showing the copy on this phone.'); renderSync(); }
+}
+async function act(op, args, okMsg){
+  document.body.classList.add('busy');
+  try { const r = await call(op, args); render(); if (okMsg) toast(typeof okMsg === 'function' ? okMsg(r) : okMsg); return r; }
+  catch(e) { toast(e.message); throw e; }
+  finally { document.body.classList.remove('busy'); }
 }
 
-function saveCfg(){
-  for(const k of ['name','biz','email','phone','addr','pay','prefix'])
-    DB.cfg[k]=document.getElementById('cfg-'+k).value;
-  save(); toast('Details saved');
+/* ================= numbers for the screens ================= */
+function figures(fy){
+  const t = today(), active = S.db.clients.filter(c => c.status === 'active');
+  const start = R2R.fyStart(fy), end = R2R.fyEnd(fy);
+  const recs = S.db.receipts.filter(r => r.date >= start && r.date <= end);
+  const collected = recs.reduce((s,r) => s + +r.amount, 0);
+  const book = active.reduce((s,c) => s + c.amount, 0);
+  const late = active.filter(c => c.due < t).reduce((s,c) => s + c.amount, 0);
+  const toCome = active.filter(c => c.due >= t && c.due <= end).reduce((s,c) => s + c.amount, 0);
+  return { recs, collected, book, late, toCome, active, pct: book ? Math.round(collected / book * 100) : 0 };
+}
+function statusLine(c, s){
+  const late = s.days < 0 ? `Late ${-s.days} day${s.days===-1?'':'s'}` : '';
+  switch (s.phase) {
+    case 'lapsed':   return { t:'Lapsed', cls:'' };
+    case 'upcoming': return { t:`Due ${R2R.fmtDM(c.due)} · in ${s.days} day${s.days===1?'':'s'}`, cls:'' };
+    case 'due':      return { t:'Due today', cls:'neg' };
+    case 'ready':    return { t:`${late} · reminder ${s.next} ready`, cls:'neg' };
+    case 'waiting':  return { t:`${late} · ${s.sent>=R2R.MAX_WA ? 'call them' : 'next reminder'} ${R2R.fmtDM(s.nextOn)}`, cls:'neg' };
+    case 'call':     return { t:`${late} · call them`, cls:'neg' };
+  }
+  return { t:'', cls:'' };
+}
+function autopilotChip(){
+  if (!S.conn) return `<a class="chip" href="#setup">Autopilot off</a>`;
+  return S.db.cfg.live ? `<a class="chip on" href="#setup"><span class="dot"></span>Autopilot on</a>`
+                       : `<a class="chip test" href="#setup">Test mode</a>`;
 }
 
-function remind(id){
-  const c=DB.clients.find(x=>x.id===id); const n=days(c.due);
-  const when = n<0 ? `was due on ${fmt(c.due)}` : n===0 ? 'falls due today' : `falls due on ${fmt(c.due)}`;
-  const msg=`Hi ${c.name.split(' ')[0]},\n\nHope you're doing well. A quick note that your annual R2R Tutorials subscription ${when}. The fee for the coming year is ${inr(c.amount)}.\n\nI'll send the invoice across shortly — do let me know if you'd like to continue on the same plan or adjust anything.\n\nWarm regards,\n${DB.cfg.name}\n${DB.cfg.biz}`;
-  copy(msg,'Reminder copied');
+/* ================= screens ================= */
+const NAV = [['today','Today'],['clients','Clients'],['money','Money'],['add','Add client'],['setup','Setup']];
+function route(){ const h = (location.hash || '#today').slice(1).split('/'); return { v:h[0] || 'today', id:h[1] || null }; }
+
+function render(){
+  const r = route();
+  document.getElementById('side-nav').innerHTML = NAV.map(([v,l]) =>
+    `<a class="tab-btn${(r.v===v || (r.v==='client'&&v==='clients') || (r.v==='edit'&&v==='clients')) ? ' active':''}" href="#${v}" onclick="menu(false)">${l}</a>`).join('');
+  const el = document.getElementById('app');
+  const views = { today:vToday, clients:vClients, client:vClient, money:vMoney, add:vForm, edit:vForm, setup:vSetup };
+  el.innerHTML = (views[r.v] || vToday)(r.id);
+  renderSync();
+  const tb = document.getElementById('theme-btn');
+  tb.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? 'Light mode' : 'Dark mode';
+}
+function renderSync(){
+  const n = document.getElementById('sync-note');
+  if (!S.conn) n.textContent = 'Saved on this phone only';
+  else n.textContent = S.synced ? `Synced ${S.synced.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` : 'Connected to autopilot';
 }
 
-/* ---------------- invoice ---------------- */
-let lastInvText='';
-function invoice(id){
-  const c=DB.clients.find(x=>x.id===id); if(!c) return;
-  const d=today();
-  const fy=fyOf(d);
-  if(!c.pendingNo){ c.pendingNo = nextNo(d); save(); }   // number is issued once, then reused on receipt
-  const no = c.pendingNo;
-  const periodEnd = (()=>{ const s=parse(c.due); return fmt(iso(new Date(s.getFullYear()+1, s.getMonth(), s.getDate()-1))); })();
-  const desc = c.note || 'Annual personal finance tutoring programme';
+function vToday(){
+  const t = today(), fy = R2R.fyOf(t), f = figures(fy);
+  const withState = f.active.map(c => ({ c, s:R2R.state(c, t) }));
+  const ready = withState.filter(x => x.s.phase === 'ready' || x.s.waHead);
+  const calls = withState.filter(x => x.s.phase === 'call');
+  const waiting = withState.filter(x => x.s.phase === 'waiting' || x.s.phase === 'due');
+  const upcoming = withState.filter(x => x.s.phase === 'upcoming').sort((a,b) => a.c.due < b.c.due ? -1 : 1);
+  const in30 = upcoming.filter(x => x.s.days <= 30);
+  const months = {};
+  upcoming.filter(x => x.c.due <= R2R.fyEnd(fy)).forEach(x => { const k = x.c.due.slice(0,7); months[k] = months[k] || {n:0,amt:0}; months[k].n++; months[k].amt += x.c.amount; });
+  const big = Object.entries(months).sort((a,b) => b[1].amt - a[1].amt)[0];
 
-  document.getElementById('inv-body').innerHTML=`
-  <div class="inv">
-    <div class="inv-head">
-      <div>
-        <h2>${esc(DB.cfg.biz)}</h2>
-        <div style="font-size:12px;color:#5b6675;margin-top:4px">${esc(DB.cfg.name)}</div>
-        <div style="font-size:12px;color:#5b6675">${esc(DB.cfg.email)}${DB.cfg.phone?' · '+esc(DB.cfg.phone):''}</div>
-        <div style="font-size:12px;color:#5b6675;white-space:pre-line">${esc(DB.cfg.addr)}</div>
-      </div>
-      <div style="text-align:right">
-        <div class="inv-lbl">Invoice</div>
-        <div class="num accent" style="font-weight:700;font-size:15px">${esc(no)}</div>
-        <div class="inv-lbl" style="margin-top:12px">Issued</div>
-        <div class="num" style="font-size:13px">${fmt(iso(d))}</div>
-        <div class="inv-lbl" style="margin-top:12px">Due</div>
-        <div class="num" style="font-size:13px">${fmt(c.due)}</div>
-      </div>
-    </div>
-
-    <div class="inv-lbl">Billed to</div>
-    <div style="font-weight:700;font-size:16px">${esc(c.name)}</div>
-    <div style="font-size:12px;color:#5b6675">${esc(c.email||'')}${c.phone?' · '+esc(c.phone):''}</div>
-
-    <table>
-      <thead><tr><th>Description</th><th class="num">Amount</th></tr></thead>
-      <tbody>
-        <tr><td>${esc(desc)}<div style="font-size:12px;color:#7b8797;margin-top:4px">
-            Subscription period ${fmt(c.due)} — ${periodEnd}</div></td>
-          <td class="num">${inr(c.amount)}</td></tr>
-        <tr class="total"><td>Total payable</td><td class="num">${inr(c.amount)}</td></tr>
-      </tbody>
-    </table>
-    <div class="words">Rupees ${words(c.amount)} only.</div>
-
-    <div class="inv-foot">
-      <div class="inv-lbl">How to pay</div>
-      <div style="white-space:pre-line;margin-bottom:14px">${esc(DB.cfg.pay)}</div>
-      <div style="font-size:11px;color:#8b94a3">
-        Educational tutoring services. Fees are non-refundable once the subscription period begins.
-        This is a service invoice; no goods have been supplied.
-      </div>
-    </div>
+  let h = `<div class="chips"><span class="chip" style="border:0;background:none;padding-left:0">Renewal Desk</span>${autopilotChip()}
+    <a class="chip" href="#clients">${f.active.length} clients</a></div>
+  <div class="pg-head"><div class="pg-kicker">${esc(S.db.cfg.biz)} · collected FY ${fy}</div>
+    <div class="pg-big">${R2R.inr(f.collected)}</div>
+    <div class="pg-sub">${f.pct}% of your ${R2R.lakh(f.book)} book</div></div>
+  <div class="pills">
+    <div class="pill mint"><span>Collected</span><b>${R2R.inr(f.collected)}</b></div>
+    <div class="pill blush"><span>Late</span><b class="${f.late?'neg':''}">${R2R.inr(f.late)}</b></div>
+    <div class="pill blue"><span>To come</span><b>${R2R.inr(f.toCome)}</b></div>
   </div>`;
 
-  lastInvText = `INVOICE ${no}\n${DB.cfg.biz} — ${DB.cfg.name}\n\nBilled to: ${c.name}\nIssued: ${fmt(iso(d))}\nDue: ${fmt(c.due)}\n\n${desc}\nPeriod: ${fmt(c.due)} to ${periodEnd}\nAmount: ${inr(c.amount)}\n\nTOTAL PAYABLE: ${inr(c.amount)}\n(Rupees ${words(c.amount)} only)\n\nHow to pay:\n${DB.cfg.pay}`;
-  document.getElementById('scrim-inv').classList.add('on');
-}
-function copyInvText(){ copy(lastInvText,'Invoice copied'); }
+  if (ready.length) h += `<div class="alert"><h4>Send on WhatsApp today · ${ready.length}</h4>
+    <div class="sub">Messages are written for you. Tap, check, press send.</div>
+    ${ready.map(({c,s}) => `<div class="rowx"><a href="#client/${c.id}" style="text-decoration:none;min-width:0"><div class="a">${esc(c.name)}</div>
+      <div class="b">${R2R.inr(c.amount)} · ${s.waHead ? `heads-up · no email on file` : `reminder ${s.next} of ${R2R.MAX_WA}`}</div></a>
+      <button class="wbtn" onclick="openWA('${c.id}','${s.waHead?'headsup':'reminder'}',true)">WhatsApp</button></div>`).join('')}
+    <div class="note">${S.conn && S.db.cfg.live ? 'Heads-ups and invoices go by email on their own.' : 'Reminders start a week after the due date, then weekly, up to 3.'} After reminder 3, the app asks you to call.</div></div>`;
 
-/* amount in words, Indian system */
-function words(n){
-  n=Math.round(n); if(n===0) return 'Zero';
-  const o=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve',
-    'Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
-  const t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
-  const two=x=>x<20?o[x]:t[Math.floor(x/10)]+(x%10?' '+o[x%10]:'');
-  const three=x=>(x>99?o[Math.floor(x/100)]+' Hundred'+(x%100?' ':''):'')+(x%100?two(x%100):'');
-  let out='';
-  const cr=Math.floor(n/1e7); n%=1e7;
-  const la=Math.floor(n/1e5); n%=1e5;
-  const th=Math.floor(n/1e3); n%=1e3;
-  if(cr) out+=three(cr)+' Crore ';
-  if(la) out+=three(la)+' Lakh ';
-  if(th) out+=three(th)+' Thousand ';
-  if(n)  out+=three(n);
-  return out.trim();
-}
+  if (calls.length) h += `<div class="blush"><h4>Call these · all ${R2R.MAX_WA} reminders sent</h4>
+    ${calls.map(({c,s}) => `<a class="rowx" href="#client/${c.id}"><div><div class="a">${esc(c.name)}</div><div class="b">Due ${R2R.fmt(c.due)} · ${-s.days} days late</div></div>
+      <div class="c">${R2R.inr(c.amount)}</div></a>`).join('')}</div>`;
 
-/* ---------------- contacts import ---------------- */
-const canPick = ('contacts' in navigator) && ('ContactsManager' in window);
+  if (upcoming.length) h += `<div class="upc"><h4>Coming up${S.conn && S.db.cfg.live ? ' · autopilot emails these' : ''}</h4>
+    ${upcoming.slice(0,4).map(({c,s}) => `<a class="rowx" href="#client/${c.id}"><div><div class="a">${esc(c.name)}</div>
+      <div class="b">Due ${R2R.fmtDM(c.due)} · ${c.cycle.headsup ? 'heads-up sent' : c.email ? `heads-up ${R2R.fmtDM(s.headsOn)}` : 'no email on file'}</div></div>
+      <div class="c">${R2R.inr(c.amount)}</div></a>`).join('')}</div>`;
 
-function contactsHint(){
-  const el=document.getElementById('contacts-hint');
-  const btn=document.getElementById('btn-contacts');
-  if(canPick){
-    el.textContent='Your phone will ask permission and let you tick the people you want.';
-  }else{
-    btn.disabled=true; btn.style.opacity=.4; btn.style.cursor='not-allowed';
-    el.textContent='Direct contact picking needs Chrome on Android over https. On iPhone, open Contacts → share a card → save the .vcf and use “Import .vcf file”. Multiple files at once is fine.';
-  }
+  if (waiting.length) h += `<div class="sec">Late · waiting</div><div class="cardx">
+    ${waiting.map(({c,s}) => { const st = statusLine(c,s); return `<a class="rowx" href="#client/${c.id}"><div><div class="a">${esc(c.name)}</div>
+      <div class="b ${st.cls}">${esc(st.t)}</div></div><div class="c">${R2R.inr(c.amount)}</div></a>`; }).join('')}</div>`;
+
+  h += `<div class="cardx" style="margin-top:14px">
+    <div class="rowx"><div><div class="a">Next 30 days</div><div class="b">${in30.length ? `${in30.length} renewal${in30.length>1?'s':''} · ${esc(in30.map(x=>first(x.c.name)).join(', '))}` : 'Nothing due'}</div></div>
+      <div class="c">${R2R.inr(in30.reduce((s,x)=>s+x.c.amount,0))}</div></div>
+    ${big ? `<div class="rowx"><div><div class="a">${R2R.MON[+big[0].slice(5)-1]} ${big[0].slice(0,4)}</div><div class="b">Biggest month left this year · ${big[1].n} renewal${big[1].n>1?'s':''}</div></div>
+      <div class="c">${R2R.inr(big[1].amt)}</div></div>` : ''}
+  </div>
+  <a class="cardx" href="#setup" style="display:block;text-decoration:none"><div class="rowx"><div><div class="a">Autopilot</div>
+    <div class="b">${S.conn ? (S.db.meta.lastRun ? `Last run ${new Date(S.db.meta.lastRun).toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}${S.db.meta.lastOk===false?' · failed':''}` : 'Runs every morning at 07:00') : 'Not connected · reminders only on this phone'}</div></div>
+    <div class="c ${S.conn && S.db.cfg.live ? 'pos' : ''}">${S.conn ? (S.db.cfg.live ? 'On' : 'Test') : 'Off'}</div></div></a>
+  <div class="disclaimer">R2R · Risks to Reward. Renewal Desk keeps your client list on this phone${S.conn ? ' and in your Google Sheet' : ''}.</div>`;
+  return h;
 }
 
-async function pickContacts(){
-  try{
-    const picked = await navigator.contacts.select(['name','email','tel'], {multiple:true});
-    if(!picked.length) return;
-    reviewImport(picked.map(p=>({
-      name:(p.name&&p.name[0])||'',
-      email:(p.email&&p.email[0])||'',
-      phone:(p.tel&&p.tel[0])||''
-    })));
-  }catch(err){
-    toast('Contacts were not shared');
-  }
+function vClients(){
+  const t = today();
+  let list = S.db.clients.map(c => ({ c, s:R2R.state(c,t) }));
+  if (S.filter === 'Late') list = list.filter(x => ['due','ready','waiting','call'].includes(x.s.phase));
+  if (S.filter === 'Lapsed') list = list.filter(x => x.s.phase === 'lapsed');
+  if (S.filter === 'All') list = list.filter(x => x.s.phase !== 'lapsed');
+  const q = S.q.trim().toLowerCase();
+  if (q) list = list.filter(x => x.c.name.toLowerCase().includes(q));
+  list.sort((a,b) => a.c.due < b.c.due ? -1 : 1);
+  const active = S.db.clients.filter(c=>c.status==='active');
+  return `<div class="pg-head"><div class="pg-kicker">All clients</div><div class="pg-big">${active.length} active</div>
+    <div class="pg-sub dim">${R2R.lakh(active.reduce((s,c)=>s+c.amount,0))} a year</div></div>
+  <div class="seg" style="margin-bottom:12px">${['All','Late','Lapsed'].map(f => `<button class="${S.filter===f?'on':''}" onclick="S.filter='${f}';render()">${f}</button>`).join('')}</div>
+  <input class="search" type="search" placeholder="Search by name" value="${esc(S.q)}" oninput="S.q=this.value;document.getElementById('clist').innerHTML=clientRows()" aria-label="Search clients">
+  <div id="clist">${clientRows(list)}</div>
+  <a class="btn" href="#add" style="margin-top:6px">Add client</a>`;
+}
+function clientRows(list){
+  if (!list) { const t = today(); const q = S.q.trim().toLowerCase();
+    list = S.db.clients.map(c=>({c,s:R2R.state(c,t)})).filter(x => S.filter==='Lapsed' ? x.s.phase==='lapsed' : S.filter==='Late' ? ['due','ready','waiting','call'].includes(x.s.phase) : x.s.phase!=='lapsed')
+      .filter(x => !q || x.c.name.toLowerCase().includes(q)).sort((a,b)=>a.c.due<b.c.due?-1:1); }
+  if (!list.length) return `<div class="empty">${S.q ? 'No client by that name.' : S.filter==='Late' ? 'Nobody is late. ' : S.filter==='Lapsed' ? 'No lapsed clients.' : 'No clients yet.'}</div>`;
+  return `<div class="cream">${list.map(({c,s}) => { const st = statusLine(c,s);
+    return `<a class="rowx" href="#client/${c.id}"><div><div class="a">${esc(c.name)}</div><div class="b ${st.cls}">${esc(st.t)}</div></div>
+      <div class="c">${R2R.inr(c.amount)}</div></a>`; }).join('')}</div>`;
 }
 
-function importVcf(e){
-  const files=[...e.target.files]; e.target.value='';
-  if(!files.length) return;
-  let out=[], left=files.length;
-  files.forEach(f=>{
-    const r=new FileReader();
-    r.onload=()=>{ out=out.concat(parseVcf(r.result)); if(!--left) finish(); };
-    r.onerror=()=>{ if(!--left) finish(); };
-    r.readAsText(f);
-  });
-  function finish(){
-    if(!out.length) return toast('No contacts found in that file');
-    reviewImport(out);
-  }
-}
+function vClient(id){
+  const c = byId(id);
+  if (!c) return `<div class="empty">That client is no longer on your books.</div><a class="btn" href="#clients">All clients</a>`;
+  const t = today(), s = R2R.state(c,t), cyc = c.cycle, auto = !!(S.conn && S.db.cfg.live);
+  const sub = s.phase==='lapsed' ? ['Lapsed · no reminders','dim'] : s.days > 0 ? [`Renews ${R2R.fmt(c.due)} · in ${s.days} days`,''] :
+              s.days === 0 ? [`${R2R.inr(c.amount)} due today`,'warn'] : [`${R2R.inr(c.amount)} overdue · since ${R2R.fmtDM(c.due)}`,'neg'];
+  const tagRow = (a, b, tag, cls, bcls) => `<div class="rowx"><div><div class="a">${a}</div><div class="b ${bcls||''}">${b}</div></div><span class="tag ${cls}">${tag}</span></div>`;
 
-function parseVcf(text){
-  // unfold continuation lines, then read one card at a time
-  const lines=text.replace(/\r\n/g,'\n').replace(/\n[ \t]/g,'').split('\n');
-  const cards=[]; let cur=null;
-  for(const raw of lines){
-    const line=raw.trim();
-    if(/^BEGIN:VCARD$/i.test(line)){ cur={name:'',email:'',phone:'',last:'',first:''}; continue; }
-    if(/^END:VCARD$/i.test(line)){
-      if(cur){
-        if(!cur.name) cur.name=[cur.first,cur.last].filter(Boolean).join(' ').trim();
-        if(cur.name) cards.push({name:cur.name,email:cur.email,phone:cur.phone});
-      }
-      cur=null; continue;
+  let steps = '';
+  if (c.status === 'active') {
+    if (c.email) {
+      steps += cyc.headsup ? tagRow('Heads-up email', `Sent ${R2R.fmt(cyc.headsup)}`, 'SENT', 'sent')
+        : s.days > 0 ? tagRow('Heads-up email', `Goes out ${R2R.fmt(s.headsOn < t ? t : s.headsOn)}${auto ? '' : ' · once autopilot is live'}`, 'SCHEDULED', 'sched')
+        : tagRow('Heads-up email', 'Not sent for this renewal', 'SKIPPED', 'skip');
+      steps += cyc.invoice && cyc.invoice !== 'skipped' ? tagRow('Invoice email', `Sent ${R2R.fmt(cyc.invoice)} · ${esc(cyc.invNo||'')}`, 'SENT', 'sent')
+        : cyc.invoice === 'skipped' ? tagRow('Invoice email', 'Already long overdue when autopilot started', 'SKIPPED', 'skip')
+        : s.days >= -R2R.INVOICE_GRACE ? tagRow('Invoice email', `Goes out ${R2R.fmt(c.due < t ? t : c.due)}${auto ? '' : ' · once autopilot is live'}`, 'SCHEDULED', 'sched')
+        : tagRow('Invoice email', 'Not emailed. Use Invoice below to share it', 'SKIPPED', 'skip');
+    } else {
+      steps += cyc.waHead ? tagRow('WhatsApp heads-up', `Sent by you · ${R2R.fmt(cyc.waHead)}`, 'SENT', 'sent')
+        : s.waHead ? tagRow('WhatsApp heads-up', 'No email on file · ready to send', 'READY', 'ready', 'neg')
+        : tagRow('Heads-up', 'No email on file. Add one in Edit', s.days > 0 ? 'LATER' : 'SKIPPED', s.days > 0 ? 'later' : 'skip');
     }
-    if(!cur) continue;
-    const i=line.indexOf(':'); if(i<0) continue;
-    const key=line.slice(0,i).toUpperCase(), val=unesc(line.slice(i+1).trim());
-    if(/(^|;)FN($|;)/.test(key) && val) cur.name=val;
-    else if(/(^|;)N($|;)/.test(key)){ const p=val.split(';'); cur.last=p[0]||''; cur.first=p[1]||''; }
-    else if(key.includes('EMAIL') && !cur.email) cur.email=val;
-    else if(key.includes('TEL') && !cur.phone) cur.phone=val;
+    for (let k = 1; k <= R2R.MAX_WA; k++) {
+      const sentOn = cyc.wa[k-1];
+      if (sentOn) steps += tagRow(`WhatsApp reminder ${k}`, `Sent by you · ${R2R.fmt(sentOn)}`, 'SENT', 'sent');
+      else if (s.phase === 'ready' && s.next === k) steps += tagRow(`WhatsApp reminder ${k}`, 'Ready to send today', 'READY', 'ready', 'neg');
+      else if (s.next === k && s.nextOn) steps += tagRow(`WhatsApp reminder ${k}`, `From ${R2R.fmt(s.nextOn)}, if still unpaid`, 'LATER', 'later');
+      else steps += tagRow(`WhatsApp reminder ${k}`, k === 1 ? 'A week after the due date, if unpaid' : 'A week after the one before', 'LATER', 'later');
+    }
+    steps += s.days > 0 ? tagRow('Payment', `Due ${R2R.fmt(c.due)}`, 'LATER', 'later')
+      : tagRow('Payment', s.phase === 'call' ? 'All reminders sent · give them a call' : 'Waiting', 'OPEN', 'open', 'neg');
   }
-  return cards;
-}
-const unesc = s=>s.replace(/\\n/gi,' ').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
 
-let staged=[];
-function reviewImport(people){
-  // drop anyone already on the books, by name
-  const have=new Set(DB.clients.map(c=>c.name.toLowerCase().trim()));
-  staged=people.filter(p=>p.name && !have.has(p.name.toLowerCase().trim()));
-  const skipped=people.length-staged.length;
-  if(!staged.length){
-    return toast(skipped?'Everyone there is already a client':'Nothing to import');
+  const primary = s.phase === 'ready' ? `<button class="btn" onclick="openWA('${c.id}','reminder',true)">Send reminder ${s.next} on WhatsApp</button>`
+    : s.waHead ? `<button class="btn" onclick="openWA('${c.id}','headsup',true)">Send heads-up on WhatsApp</button>`
+    : c.status === 'active' ? `<button class="btn" onclick="openPay('${c.id}')">Record payment</button>`
+    : `<button class="btn" onclick="reactivate('${c.id}')">Make active again</button>`;
+  const second = (s.phase === 'ready' || s.waHead) ? `<button class="pill-btn" onclick="openPay('${c.id}')">Record payment</button>`
+    : `<button class="pill-btn" onclick="openWA('${c.id}','${s.days > 0 ? 'headsup' : 'reminder'}',false)">WhatsApp</button>`;
+  const recs = S.db.receipts.filter(r => r.clientId === c.id).sort((a,b) => a.date < b.date ? 1 : -1);
+
+  return `<a class="pill-btn" href="#clients" style="margin-bottom:16px">← All clients</a>
+  <div class="pg-head"><div class="pg-kicker">Client since ${R2R.fmt(c.anchor)}</div><div class="pg-big">${esc(c.name)}</div>
+    <div class="pg-sub ${sub[1]}">${sub[0]}</div></div>
+  <div class="pills two">
+    <div class="pill butter"><span>Annual fee</span><b>${R2R.inr(c.amount)}</b></div>
+    ${s.days <= 0 && c.status==='active' ? `<div class="pill lilac"><span>WhatsApp reminders</span><b>${cyc.wa.length} of ${R2R.MAX_WA} sent</b></div>`
+      : `<div class="pill ${c.email?'mint':'blush'}"><span>Email</span><b>${c.email ? 'On file' : 'Missing'}</b></div>`}
+  </div>
+  ${c.status === 'active' ? `<div class="sec">This renewal</div><div class="cardx">${steps}</div>` : ''}
+  <div class="stack">${primary}
+    <div class="btn-row">${second}<button class="pill-btn" onclick="showInvoice('${c.id}')">Invoice</button><a class="pill-btn" href="#edit/${c.id}">Edit</a></div>
+    ${c.status==='active' ? `<button class="link-btn" onclick="lapse('${c.id}')">Mark lapsed (stops reminders)</button>` : ''}
+    ${cyc.wa.length || cyc.waHead ? `<button class="link-btn" onclick="undoWA('${c.id}')">Undo last WhatsApp “sent”</button>` : ''}
+  </div>
+  <div class="sec">History</div>
+  <div class="cream">
+    ${recs.map(r => `<div class="rowx"><div><div class="a">Paid · ${esc(r.no)}</div><div class="b">${R2R.fmt(r.date)}${r.period ? ` · year from ${R2R.fmtDM(r.period)}` : ''}</div></div><div class="c pos">${R2R.inr(r.amount)}</div></div>`).join('')}
+    <div class="rowx"><div><div class="a">Joined</div><div class="b">${R2R.fmt(c.anchor)}</div></div><div class="c" style="font-weight:600;color:var(--text3)">${c.phone ? esc(c.phone) : ''}</div></div>
+  </div>`;
+}
+
+function vMoney(){
+  const fyNow = R2R.fyOf(today()), fy = S.fySel || fyNow, f = figures(fy), t = today();
+  const start = R2R.fyStart(fy), y0 = +start.slice(0,4);
+  const cols = [];
+  for (let i = 0; i < 12; i++) {
+    const m = (3 + i) % 12, y = m >= 3 ? y0 : y0 + 1, key = `${y}-${pad2(m+1)}`;
+    const exp = f.active.filter(c => +c.anchor.slice(5,7) === m+1).reduce((s,c)=>s+c.amount,0);
+    const inn = f.recs.filter(r => r.date.slice(0,7) === key).reduce((s,r)=>s + +r.amount,0);
+    const late = f.active.filter(c => c.due.slice(0,7) === key && c.due < t).reduce((s,c)=>s+c.amount,0);
+    cols.push({ label:R2R.MON[m][0], key, exp, inn, late, now: key === t.slice(0,7) });
   }
-  document.getElementById('import-body').innerHTML=`
-    <h2 style="font-size:19px">Import ${staged.length} contact${staged.length>1?'s':''}</h2>
-    <div class="meta" style="margin-top:6px">Set the annual fee and start date for each, then untick anyone you don't want.${
-      skipped?` ${skipped} already on your books ${skipped>1?'were':'was'} skipped.`:''}</div>
-    <div style="margin-top:16px">${staged.map((p,i)=>`
-      <div class="card" style="background:var(--panel2)">
-        <label style="display:flex;align-items:center;gap:10px;margin:0;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);font-family:'Syne',sans-serif;font-weight:700">
-          <input type="checkbox" id="im-on-${i}" checked style="width:18px;height:18px;accent-color:var(--amber)">
-          ${esc(p.name)}
-        </label>
-        <div class="meta" style="margin-left:28px">${esc(p.email||'no email')}${p.phone?' · '+esc(p.phone):''}</div>
-        <div class="grid2" style="margin-left:0">
-          <div><label>Annual fee (₹)</label><input id="im-amt-${i}" type="number" value="15000"></div>
-          <div><label>Client since</label><input id="im-anc-${i}" type="date" value="${iso(today())}"></div>
-        </div>
-      </div>`).join('')}</div>
-    <div class="acts" style="margin-top:8px">
-      <button class="primary" onclick="commitImport()">Add selected</button>
-      <button class="ghost" onclick="close_('scrim-import')">Cancel</button>
+  const max = Math.max(1, ...cols.map(c => Math.max(c.exp, c.inn + c.late)));
+  const px = v => Math.round(v / max * 146);
+  return `<div class="seg" style="margin-bottom:18px">${[fyNow, R2R.prevFy(fyNow)].map((x,i) =>
+      `<button class="${fy===x?'on':''}" onclick="S.fySel='${x}';render()">${i ? 'Last year' : 'This year'} · ${x}</button>`).join('')}</div>
+  <div class="pg-head"><div class="pg-kicker">FY ${fy} · Apr ${y0} to Mar ${y0+1}</div><div class="pg-big">${R2R.inr(f.collected)} in</div>
+    <div class="pg-sub">${f.recs.length} receipt${f.recs.length===1?'':'s'}${fy===fyNow ? ` · ${f.pct}% of book` : ''}</div></div>
+  ${fy===fyNow ? `<div class="pills">
+    <div class="pill mint"><span>Collected</span><b>${R2R.inr(f.collected)}</b></div>
+    <div class="pill blush"><span>Late</span><b class="${f.late?'neg':''}">${R2R.inr(f.late)}</b></div>
+    <div class="pill blue"><span>To come</span><b>${R2R.inr(f.toCome)}</b></div></div>` : ''}
+  <div class="sec">Month by month</div>
+  <div class="cardx pad">
+    <div class="bars" role="img" aria-label="Renewals falling due and money collected each month, April to March">
+      ${cols.map(c => `<div class="col" style="height:${Math.max(2, px(Math.max(c.exp, c.inn + c.late)))}px" title="${c.key}: due ${R2R.inr(c.exp)}, in ${R2R.inr(c.inn)}">
+        <div class="late" style="height:${px(c.late)}px"></div><div class="in" style="height:${px(c.inn)}px"></div></div>`).join('')}
+    </div>
+    <div class="blabels">${cols.map(c => `<div class="${c.now?'now':''}">${c.label}</div>`).join('')}</div>
+    <div class="legend"><span><i style="background:var(--pos)"></i>Collected</span><span><i style="background:var(--neg)"></i>Late</span><span><i style="background:var(--track);border:1px solid var(--border)"></i>Renewals due</span></div>
+  </div>
+  <div class="sec">Receipts <button class="pill-btn" onclick="exportCsv('${fy}')">Export</button></div>
+  ${f.recs.length ? `<div class="cream">${f.recs.slice().sort((a,b)=>a.date<b.date?1:-1).map(r => `<div class="rowx"><div><div class="a">${esc(r.name)}</div>
+    <div class="b">${R2R.fmt(r.date)} · ${esc(r.no)}</div></div><div class="c pos">${R2R.inr(r.amount)}</div></div>`).join('')}</div>`
+    : `<div class="empty">No receipts in FY ${fy}.</div>`}`;
+}
+
+function vForm(id){
+  const editing = !!id, c = editing ? byId(id) : null;
+  if (editing && !c) return `<div class="empty">That client is no longer on your books.</div>`;
+  const v = c || { name:'', email:'', phone:'', amount:15000, anchor:today(), note:'' };
+  const preset = [10000,15000,20000].includes(+v.amount) ? +v.amount : 'other';
+  return `${editing ? `<a class="pill-btn" href="#client/${c.id}" style="margin-bottom:16px">← Back</a>` : ''}
+  <div class="pg-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+    <div style="min-width:0"><div class="pg-kicker">${editing ? 'Edit client' : 'Fill this once'}</div><div class="pg-big">${editing ? esc(c.name) : 'New client'}</div></div>
+    ${!editing && canPick ? `<button class="pill-btn" onclick="fromContacts()">From contacts</button>` : ''}
+  </div>
+  <form class="cardx pad form" id="cform" onsubmit="saveClient(event,'${id||''}')">
+    <div class="fld"><label for="f-name">Name</label><input id="f-name" required autocomplete="name" value="${esc(v.name)}" placeholder="Full name"></div>
+    <div class="fld key"><label for="f-email">Email · heads-ups and invoices go here</label><input id="f-email" type="email" inputmode="email" autocomplete="email" value="${esc(v.email)}" placeholder="name@email.com"></div>
+    <div class="grid2">
+      <div class="fld key"><label for="f-phone">WhatsApp number</label><input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" value="${esc(v.phone)}" placeholder="+91"></div>
+      <div class="fld"><label for="f-anchor">Joined on</label><input id="f-anchor" type="date" value="${v.anchor}"></div>
+    </div>
+    <div class="fld"><span class="lbl">Annual fee</span>
+      <div class="seg" id="fee-seg">${[[10000,'₹10k'],[15000,'₹15k'],[20000,'₹20k'],['other','Other']].map(([val,l]) =>
+        `<button type="button" class="${preset===val?'on':''}" onclick="pickFee(this,'${val}')">${l}</button>`).join('')}</div>
+      <input id="f-amount" type="number" inputmode="numeric" min="0" value="${v.amount}" aria-label="Annual fee in rupees" style="margin-top:8px;${preset==='other'?'':'display:none'}">
+    </div>
+    ${editing ? `<div class="fld"><label for="f-due">Next renewal</label><input id="f-due" type="date" value="${c.due}"></div>
+      <div class="fld"><label for="f-note">Service line on the invoice</label><input id="f-note" value="${esc(c.note)}" placeholder="Annual personal finance tutoring programme"></div>`
+    : `<label class="check"><input type="checkbox" id="f-paid" checked> First year’s fee already paid (records a receipt)</label>`}
+  </form>
+  ${editing ? '' : `<div class="mintbox"><h4>Every year, automatically</h4>
+    <div class="rowx"><div class="a">Friendly heads-up email</div><div class="c">14 days before</div></div>
+    <div class="rowx"><div class="a">Invoice PDF by email</div><div class="c">On the day</div></div>
+    <div class="rowx"><div class="a">WhatsApp reminders ready for you</div><div class="c">Weekly, up to 3</div></div>
+    <div class="rowx"><div class="a">Google Calendar entry</div><div class="c">Automatic</div></div></div>`}
+  <button class="btn" form="cform" type="submit" style="margin-top:${editing?'14px':'0'}">${editing ? 'Save changes' : 'Add and start autopilot'}</button>
+  ${editing ? `<div class="stack"><button class="link-btn neg" onclick="removeClient('${c.id}')">Remove ${esc(first(c.name))} completely (receipts are kept)</button></div>` : ''}`;
+}
+
+function vSetup(){
+  const cfg = S.db.cfg, m = S.db.meta || {};
+  const ap = !S.conn ? `<div class="cardx pad">
+      <div class="a" style="font-weight:700;font-size:15px">Connect autopilot</div>
+      <p class="muted" style="margin:6px 0 12px">Paste the connection link from your Google Sheet (R2R menu → Show connection link). Your clients then live in the Sheet, and emails go out every morning on their own.</p>
+      <div class="fld"><label for="conn-link">Connection link</label><input id="conn-link" placeholder="https://script.google.com/macros/s/…/exec?key=…" autocomplete="off"></div>
+      <button class="btn" style="margin-top:12px" onclick="connect()">Connect</button>
+    </div>` : `<div class="cardx">
+      <div class="rowx"><div><div class="a">Mode</div><div class="b">${cfg.live ? 'Emails go to clients' : 'Test mode · nothing goes to clients'}</div></div>
+        <span class="tag ${cfg.live?'sent':'sched'}">${cfg.live ? 'LIVE' : 'TEST'}</span></div>
+      <div class="rowx"><div><div class="a">Last morning run</div><div class="b ${m.lastOk===false?'neg':''}">${m.lastRun ? new Date(m.lastRun).toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) + (m.lastOk===false ? ' · failed: ' + esc(m.lastError) : ' · OK') : 'Not run yet · first run tomorrow 07:00'}</div></div></div>
+      <div class="rowx"><div><div class="a">This phone</div><div class="b">${S.synced ? 'Synced ' + S.synced.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Not synced yet'}</div></div>
+        <button class="pill-btn" onclick="pull(false)">Sync</button></div>
+    </div>
+    <div class="stack" style="margin-top:4px">
+      ${cfg.live ? `<button class="pill-btn" style="min-height:48px" onclick="setLive(false)">Back to test mode</button>`
+                 : `<button class="btn" onclick="setLive(true)">Go live</button>`}
+      <div class="btn-row"><button class="pill-btn" onclick="act('test',{},'Test emails sent to your inbox')">Send me test emails</button>
+        <button class="pill-btn" onclick="runNow()">Run now</button></div>
+      <button class="link-btn" onclick="disconnect()">Disconnect this phone</button>
     </div>`;
-  document.getElementById('scrim-import').classList.add('on');
+  return `<div class="pg-head"><div class="pg-kicker">Setup</div><div class="pg-big">Autopilot</div>
+    <div class="pg-sub ${S.conn ? (cfg.live ? '' : 'warn') : 'dim'}">${S.conn ? (cfg.live ? 'On · runs every morning at 07:00' : 'Connected · test mode') : 'Not connected'}</div></div>
+  ${S.conn && !cfg.live ? `<div class="lilacbox"><b>Test mode.</b> The morning run emails you a digest of what it <i>would</i> send. Tap <b>Send me test emails</b> to see every email, then <b>Go live</b>.</div>` : ''}
+  ${ap}
+  <div class="sec">Invoice and payment details</div>
+  <form class="cardx pad form" onsubmit="saveCfg(event)">
+    <div class="grid2">
+      <div class="fld"><label for="cfg-name">Your name</label><input id="cfg-name" value="${esc(cfg.name)}"></div>
+      <div class="fld"><label for="cfg-biz">Business name</label><input id="cfg-biz" value="${esc(cfg.biz)}"></div>
+    </div>
+    <div class="grid2">
+      <div class="fld"><label for="cfg-email">Email</label><input id="cfg-email" type="email" value="${esc(cfg.email)}"></div>
+      <div class="fld"><label for="cfg-phone">Phone</label><input id="cfg-phone" type="tel" value="${esc(cfg.phone)}"></div>
+    </div>
+    <div class="fld key"><label for="cfg-upi">UPI ID · shown in emails and WhatsApp</label><input id="cfg-upi" value="${esc(cfg.upi)}" placeholder="yourname@okhdfcbank" autocomplete="off"></div>
+    <div class="fld"><label for="cfg-pay">Bank details (optional)</label><textarea id="cfg-pay" rows="3" placeholder="Bank · Account no · IFSC">${esc(cfg.pay)}</textarea></div>
+    <div class="fld"><label for="cfg-addr">Address on invoice (optional)</label><textarea id="cfg-addr" rows="2">${esc(cfg.addr)}</textarea></div>
+    <div class="fld"><label for="cfg-prefix">Invoice prefix</label><input id="cfg-prefix" value="${esc(cfg.prefix)}"></div>
+    <button class="btn" type="submit">Save details</button>
+  </form>
+  <div class="sec">Calendar</div>
+  <div class="cardx pad"><p class="muted" style="margin:0 0 ${S.conn?0:12}px">${S.conn
+    ? 'Every renewal is on a Google Calendar called “R2R Renewals”, with a reminder a week before. It updates itself when you add or change a client.'
+    : 'Once the autopilot is connected, renewals go onto your Google Calendar by themselves. Until then you can add them from a file.'}</p>
+    ${S.conn ? '' : `<button class="pill-btn" onclick="downloadIcs()">Download calendar file</button>`}</div>
+  <div class="sec">Backup</div>
+  <div class="cardx pad"><p class="muted" style="margin:0 0 12px">${S.conn ? 'Your Google Sheet already holds everything. A file backup is optional.' : 'Your data lives only on this phone. Export a backup every few months.'}</p>
+    <div class="btn-row"><button class="pill-btn" onclick="exportBackup()">Export backup</button>
+      <button class="pill-btn" onclick="document.getElementById('imp').click()">Import backup</button></div></div>
+  <div class="sec">Install</div>
+  <div class="cardx pad"><p class="muted" style="margin:0">${installHint()}</p>
+    ${deferredInstall ? `<button class="btn" style="margin-top:12px" onclick="doInstall()">Add to home screen</button>` : ''}</div>`;
 }
 
-function commitImport(){
-  let n=0;
-  staged.forEach((p,i)=>{
-    if(!document.getElementById('im-on-'+i).checked) return;
-    const anchor=document.getElementById('im-anc-'+i).value || iso(today());
-    DB.clients.push({
-      id:'c'+Date.now()+'_'+i, name:p.name, amount:+document.getElementById('im-amt-'+i).value||0,
-      anchor, due:nextAnniv(anchor), email:p.email||'', phone:p.phone||'', note:''
-    });
-    n++;
-  });
-  if(!n) return toast('Nothing selected');
-  const fresh=DB.clients.slice(-n);
-  save(); render(); close_('scrim-import');
-  toast(`Added ${n} client${n>1?'s':''}`);
-  if(confirm(`Added ${n} client${n>1?'s':''}. Add their renewal reminders to your calendar now?`))
-    downloadIcs(fresh, `r2r-new-renewals-${iso(today())}.ics`);
+/* ================= actions ================= */
+function menu(on){ document.body.classList.toggle('menu-open', on); }
+function toggleTheme(){
+  const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t); store.set(KEY_THEME, t);
+  document.querySelector('meta[name=theme-color]').setAttribute('content', t === 'dark' ? '#111413' : '#F2F3EE');
+  render();
+}
+let toastT;
+function toast(m){ const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'), 2600); }
+
+function pickFee(btn, val){
+  btn.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+  const inp = document.getElementById('f-amount');
+  if (val === 'other') { inp.style.display = ''; inp.focus(); } else { inp.style.display = 'none'; inp.value = val; }
+}
+async function saveClient(e, id){
+  e.preventDefault();
+  const g = k => document.getElementById('f-' + k);
+  const data = { name:g('name').value.trim(), email:g('email').value.trim(), phone:g('phone').value.trim(),
+    amount:+g('amount').value || 0, anchor:g('anchor').value || today() };
+  if (!data.name) return toast('Name is required');
+  if (id) {
+    data.id = id; data.due = g('due').value || byId(id).due; data.note = g('note').value.trim();
+    await act('edit', data, 'Saved'); location.hash = '#client/' + id;
+  } else {
+    data.paidNow = g('paid').checked; data.newId = R2R.uid('c');
+    await act('add', data, () => `${first(data.name)} added · ${S.conn ? 'autopilot is on it' : 'saved on this phone'}`);
+    location.hash = '#client/' + data.newId;
+  }
+}
+async function removeClient(id){
+  const c = byId(id); if (!confirm(`Remove ${c.name}? Their past receipts are kept.`)) return;
+  await act('remove', { id }, 'Removed'); location.hash = '#clients';
+}
+async function lapse(id){
+  const c = byId(id); if (!confirm(`Mark ${c.name} as lapsed? Reminders stop. You can make them active again any time.`)) return;
+  await act('status', { id, status:'lapsed' }, 'Marked lapsed');
+}
+async function reactivate(id){ await act('status', { id, status:'active', fresh:true }, c => `Active again · next renewal ${R2R.fmt(c.due)}`); }
+async function undoWA(id){ await act('waUndo', { id }, 'Undone'); }
+
+/* --- sheets --- */
+function openSheet(html){ const s = document.getElementById('sheet'); s.innerHTML = '<div class="grab"></div>' + html;
+  document.getElementById('sheet-scrim').classList.add('on'); requestAnimationFrame(()=>s.classList.add('on')); }
+function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('sheet-scrim').classList.remove('on'); }
+const xBtn = `<button class="x-btn" aria-label="Close" onclick="closeSheet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+
+function openPay(id){
+  const c = byId(id); if (!c) return;
+  openSheet(`<div class="sheet-head"><div><div class="pg-kicker">Renewal due ${R2R.fmt(c.due)}</div><div class="t">Record payment · ${esc(first(c.name))}</div></div>${xBtn}</div>
+    <div class="grid2">
+      <div class="fld"><label for="p-amt">Amount received (₹)</label><input id="p-amt" type="number" inputmode="numeric" value="${c.amount}"></div>
+      <div class="fld"><label for="p-date">Date received</label><input id="p-date" type="date" value="${today()}"></div>
+    </div>
+    <p class="muted">${S.conn && S.db.cfg.live && c.email ? `${esc(first(c.name))} gets a receipt by email.` : 'A receipt number is issued.'} The next renewal moves to ${R2R.fmt(R2R.addYears(c.due,1))}.</p>
+    <button class="btn" onclick="doPay('${c.id}')">Record payment</button>`);
+}
+async function doPay(id){
+  const amt = document.getElementById('p-amt').value, date = document.getElementById('p-date').value;
+  if (!date) return toast('Pick the date it was received');
+  if (amt === '' || isNaN(+amt)) return toast('Enter the amount received');
+  closeSheet();
+  await act('pay', { id, amount:+amt, date }, r => `Logged ${r.no}${r.emailed ? ' · receipt emailed' : ''} · next renewal ${R2R.fmt(byId(id).due)}`);
 }
 
-/* ---------------- calendar export (.ics) ---------------- */
-const icsEsc = s=>String(s??'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
-const stamp = d=>iso(d).replace(/-/g,'');
-
-function vevent(c){
-  const start=parse(c.due);
-  const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+1);
-  const uid=`r2r-${c.id}@r2rtutorials`;
-  return [
-    'BEGIN:VEVENT',
-    `UID:${uid}`,
-    `DTSTAMP:${stamp(today())}T000000Z`,
-    `DTSTART;VALUE=DATE:${stamp(start)}`,
-    `DTEND;VALUE=DATE:${stamp(end)}`,
-    `RRULE:FREQ=YEARLY;BYMONTH=${start.getMonth()+1};BYMONTHDAY=${start.getDate()}`,
-    `SUMMARY:${icsEsc(`R2R Renewal — ${c.name} (${inr(c.amount)})`)}`,
-    `DESCRIPTION:${icsEsc(`Annual tutorial fee renewal. Amount: ${inr(c.amount)}. Client since ${fmt(c.anchor)}. Raise invoice, share payment link, log the receipt.`)}`,
-    'TRANSP:TRANSPARENT',
-    'BEGIN:VALARM',
-    'TRIGGER:-P7D',
-    'ACTION:DISPLAY',
-    `DESCRIPTION:${icsEsc(`${c.name} renewal due in 7 days`)}`,
-    'END:VALARM',
-    'BEGIN:VALARM',
-    'TRIGGER:PT9H',
-    'ACTION:DISPLAY',
-    `DESCRIPTION:${icsEsc(`${c.name} renewal due today`)}`,
-    'END:VALARM',
-    'END:VEVENT'
-  ];
+let WA = null;
+function openWA(id, kind, isDue){
+  const c = byId(id); if (!c) return;
+  const s = R2R.state(c, today());
+  WA = { id, kind, isDue };
+  const label = kind === 'headsup' ? 'Heads-up' : isDue && s.next ? `Reminder ${s.next} of ${R2R.MAX_WA}` : 'Message';
+  openSheet(`<div class="sheet-head"><div><div class="pg-kicker">${label} · ${c.phone ? esc(c.phone) : 'no number saved, you pick the chat'}</div>
+      <div class="t">Message for ${esc(first(c.name))}</div></div>${xBtn}</div>
+    ${kind === 'reminder' ? `<div class="seg" style="margin-bottom:12px">${['Gentle','Firm','Short'].map(t => `<button class="${S.tone===t?'on':''}" onclick="setTone('${t}',this)">${t}</button>`).join('')}</div>` : ''}
+    <textarea class="msg" id="wa-text" aria-label="Message text">${esc(R2R.message(kind, S.tone, c, S.db.cfg))}</textarea>
+    <p class="muted" style="margin:8px 0 0">You can change the words here or in WhatsApp before sending.</p>
+    <div class="stack">
+      <button class="btn" onclick="sendWA()">Open in WhatsApp</button>
+      <div class="btn-row"><button class="pill-btn" onclick="copy(document.getElementById('wa-text').value,'Message copied')">Copy message</button>
+        ${isDue ? `<button class="pill-btn fill" onclick="markWA()">Mark as sent</button>` : ''}</div>
+    </div>`);
+}
+function setTone(t, btn){
+  S.tone = t; btn.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+  document.getElementById('wa-text').value = R2R.message(WA.kind, t, byId(WA.id), S.db.cfg);
+}
+function sendWA(){
+  const c = byId(WA.id), text = document.getElementById('wa-text').value;
+  window.open(R2R.waLink(c.phone, text), '_blank');
+  if (WA.isDue) markWA(true); else closeSheet();
+}
+async function markWA(quiet){
+  const { id, kind } = WA; closeSheet();
+  await act('wa', { id, kind }, quiet ? 'Marked as sent · undo on the client page' : 'Marked as sent');
 }
 
-function buildIcs(clients, feed){
-  const head=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//R2R Tutorials//Renewal Desk//EN',
-    'CALSCALE:GREGORIAN','METHOD:PUBLISH',
-    `X-WR-CALNAME:${icsEsc('R2R Renewals')}`,
-    `X-WR-CALDESC:${icsEsc('Annual tutorial fee renewals — R2R Tutorials')}`];
-  if(feed) head.push('REFRESH-INTERVAL;VALUE=DURATION:PT12H','X-PUBLISHED-TTL:PT12H');
-  return [...head, ...clients.flatMap(vevent), 'END:VCALENDAR'].join('\r\n');
+/* --- invoice (to print or share yourself) --- */
+let lastInvText = '';
+function showInvoice(id){
+  const c = byId(id); if (!c) return;
+  const cfg = S.db.cfg, cyc = c.cycle, issued = cyc.invoice && cyc.invoice !== 'skipped' ? cyc.invoice : today();
+  const no = cyc.invNo || 'Issued on payment';
+  const end = R2R.addDays(R2R.addYears(c.due,1), -1), desc = c.note || 'Annual personal finance tutoring programme';
+  const pay = [cfg.upi ? 'UPI: ' + cfg.upi : '', cfg.pay].filter(Boolean).join('\n');
+  document.getElementById('inv-body').innerHTML = `<div class="inv">
+    <div class="inv-head"><div><h2>${esc(cfg.biz)}</h2><div class="small" style="margin-top:4px">${esc(cfg.name)}<br>${esc(cfg.email)}${cfg.phone?' · '+esc(cfg.phone):''}</div>
+      <div class="small" style="white-space:pre-line">${esc(cfg.addr)}</div></div>
+      <div style="text-align:right"><div class="inv-lbl">Invoice</div><div style="font-weight:800;font-size:15px">${esc(no)}</div>
+        <div class="inv-lbl" style="margin-top:12px">Issued</div><div style="font-size:13px">${R2R.fmt(issued)}</div>
+        <div class="inv-lbl" style="margin-top:12px">Due</div><div style="font-size:13px">${R2R.fmt(c.due)}</div></div></div>
+    <div class="inv-lbl">Billed to</div><div style="font-weight:800;font-size:16px">${esc(c.name)}</div>
+    <div class="small">${esc(c.email)}${c.phone?' · '+esc(c.phone):''}</div>
+    <table><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>
+      <tr><td>${esc(desc)}<div class="small" style="margin-top:4px">Subscription period ${R2R.fmt(c.due)} — ${R2R.fmt(end)}</div></td><td class="num">${R2R.inr(c.amount)}</td></tr>
+      <tr class="total"><td>Total payable</td><td class="num">${R2R.inr(c.amount)}</td></tr></tbody></table>
+    <div class="small" style="font-style:italic">Rupees ${R2R.words(c.amount)} only.</div>
+    <div class="inv-foot"><div class="inv-lbl">How to pay</div><div style="white-space:pre-line;margin-bottom:14px">${esc(pay || 'Add your UPI ID in Setup')}</div>
+      <div style="font-size:11px;color:#6b7280">Educational tutoring services. Fees are non-refundable once the subscription period begins. This is a service invoice; no goods have been supplied.</div></div></div>`;
+  lastInvText = `INVOICE ${no}\n${cfg.biz} — ${cfg.name}\n\nBilled to: ${c.name}\nIssued: ${R2R.fmt(issued)}\nDue: ${R2R.fmt(c.due)}\n\n${desc}\nPeriod: ${R2R.fmt(c.due)} to ${R2R.fmt(end)}\n\nTOTAL PAYABLE: ${R2R.inr(c.amount)}\n(Rupees ${R2R.words(c.amount)} only)\n\nHow to pay:\n${pay}`;
+  document.getElementById('inv-wrap').classList.add('on');
+}
+function closeInvoice(){ document.getElementById('inv-wrap').classList.remove('on'); }
+function printInvoice(){ document.body.classList.add('printing'); window.print(); setTimeout(()=>document.body.classList.remove('printing'), 500); }
+
+/* --- autopilot connection --- */
+async function connect(){
+  const raw = document.getElementById('conn-link').value.trim();
+  let url, key;
+  try { const u = new URL(raw); key = u.searchParams.get('key'); url = u.origin + u.pathname; } catch(e) {}
+  if (!url || !key) return toast('That doesn’t look like the connection link. Copy it again from the Sheet.');
+  document.body.classList.add('busy');
+  try {
+    const j = await (await fetch(`${url}?a=get&key=${encodeURIComponent(key)}`)).json();
+    if (!j.ok) throw new Error(j.error);
+    S.conn = { url, key }; store.set(KEY_CONN, JSON.stringify(S.conn));
+    const server = R2R.normalize(j.db);
+    if (!server.clients.length && S.db.clients.length) {
+      await call('import', { db: S.db });
+      toast(`Connected · your ${S.db.clients.length} clients are now in the Sheet`);
+    } else {
+      S.db = server; S.synced = new Date(); persist();
+      toast(`Connected · ${server.clients.length} clients loaded from the Sheet`);
+    }
+    render();
+  } catch(e) { toast(e.message && !/Failed to fetch/i.test(e.message) ? e.message : 'Could not reach that link. Check it was deployed as a Web app for “Anyone”.'); }
+  finally { document.body.classList.remove('busy'); }
+}
+function disconnect(){
+  if (!confirm('Disconnect this phone? The autopilot keeps running, and your list stays in the Sheet.')) return;
+  S.conn = null; S.synced = null; store.del(KEY_CONN); render(); toast('Disconnected');
+}
+async function setLive(on){
+  if (on) {
+    const t = today(), list = S.db.clients.filter(c => c.status === 'active' && c.email);
+    const soon = list.filter(c => { const d = R2R.diff(t, c.due); return d >= -R2R.INVOICE_GRACE && d <= R2R.HEADSUP_DAYS; });
+    if (!confirm(`Go live? From tomorrow 07:00, clients get emails.${soon.length ? `\n\nFirst up: ${soon.map(c=>c.name).join(', ')}.` : ''}\n\nClients more than ${R2R.INVOICE_GRACE} days overdue don’t get an automatic invoice. Use WhatsApp for them.`)) return;
+  }
+  await act('live', { live:on }, on ? 'Autopilot is live' : 'Back to test mode');
+}
+async function runNow(){
+  if (S.db.cfg.live && !confirm('Run the morning check now? Any emails due today go out to clients.')) return;
+  await act('run', {}, 'Done · check your inbox for the digest');
+}
+async function saveCfg(e){
+  e.preventDefault();
+  const a = {}; ['name','biz','email','phone','upi','pay','addr','prefix'].forEach(k => a[k] = document.getElementById('cfg-' + k).value);
+  await act('cfg', a, 'Details saved');
 }
 
-function downloadIcs(clients, filename, feed){
-  const blob=new Blob([buildIcs(clients, feed)],{type:'text/calendar;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download=filename; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+/* --- files --- */
+function download(name, text, type){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function exportCsv(fy){
+  const rows = [['Date','Receipt no','Client','Amount (INR)','For renewal of']].concat(
+    S.db.receipts.filter(r => r.date >= R2R.fyStart(fy) && r.date <= R2R.fyEnd(fy)).sort((a,b)=>a.date<b.date?-1:1)
+      .map(r => [r.date, r.no, r.name, r.amount, r.period || '']));
+  download(`r2r-receipts-FY${fy}.csv`, rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n'), 'text/csv');
+  toast('Receipts downloaded');
+}
+function exportBackup(){ download(`r2r-desk-${today()}.json`, JSON.stringify(S.db, null, 2), 'application/json'); toast('Backup downloaded'); }
+function importBackup(e){
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    let db; try { db = JSON.parse(r.result); } catch(err) { return toast('That file could not be read'); }
+    db = (db.clients && db.clients.length && !db.clients[0].cycle && !db.meta) ? migrate(db) : R2R.normalize(db);
+    if (!confirm(`Replace the current list with this backup (${db.clients.length} clients)?`)) return;
+    if (S.conn) { try { await call('import', { db, force:true }); } catch(err) { return toast(err.message); } }
+    else { S.db = db; persist(); }
+    render(); toast('Backup restored');
+  };
+  r.readAsText(f);
+}
+const icsEsc = s => String(s ?? '').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+function downloadIcs(){
+  const list = S.db.clients.filter(c => c.status === 'active'); if (!list.length) return toast('No clients yet');
+  const ev = list.flatMap(c => { const s = c.due.replace(/-/g,''), e = R2R.addDays(c.due,1).replace(/-/g,'');
+    return ['BEGIN:VEVENT',`UID:r2r-${c.id}@r2rtutorials`,`DTSTAMP:${today().replace(/-/g,'')}T000000Z`,`DTSTART;VALUE=DATE:${s}`,`DTEND;VALUE=DATE:${e}`,
+      'RRULE:FREQ=YEARLY',`SUMMARY:${icsEsc(`R2R renewal · ${c.name} (${R2R.inr(c.amount)})`)}`,'TRANSP:TRANSPARENT',
+      'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY',`DESCRIPTION:${icsEsc(c.name + ' renewal in 7 days')}`,'END:VALARM','END:VEVENT']; });
+  download(`r2r-renewals-${today()}.ics`, ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//R2R Tutorials//Renewal Desk//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'X-WR-CALNAME:R2R Renewals', ...ev, 'END:VCALENDAR'].join('\r\n'), 'text/calendar;charset=utf-8');
+  toast('Open the file to add renewals to your calendar');
 }
 
-function publishFeed(){
-  if(!DB.clients.length) return toast('No clients yet');
-  downloadIcs(DB.clients, 'renewals.ics', true);
-  toast('renewals.ics downloaded — commit it to your repo');
-}
-function feedUrl(){
-  try{ return new URL('renewals.ics', location.href).href; }
-  catch(e){ return 'https://learn2earninvesting-maker.github.io/r2r-renewal-desk/renewals.ics'; }
-}
-function copyFeedUrl(){ copy(feedUrl(),'Feed URL copied'); }
-
-function toCalendar(id){
-  const c=DB.clients.find(x=>x.id===id); if(!c) return;
-  downloadIcs([c], `renewal-${c.name.replace(/\W+/g,'-').toLowerCase()}.ics`);
-  toast('Open the file to add it to your calendar');
-}
-function allToCalendar(){
-  if(!DB.clients.length) return toast('No clients yet');
-  downloadIcs(DB.clients, `r2r-renewals-${iso(today())}.ics`);
-  toast(`${DB.clients.length} renewals exported`);
+/* --- contacts (Chrome on Android) --- */
+const canPick = ('contacts' in navigator) && ('ContactsManager' in window);
+async function fromContacts(){
+  try {
+    const [p] = await navigator.contacts.select(['name','email','tel'], { multiple:false });
+    if (!p) return;
+    document.getElementById('f-name').value = (p.name && p.name[0]) || '';
+    document.getElementById('f-email').value = (p.email && p.email[0]) || '';
+    document.getElementById('f-phone').value = (p.tel && p.tel[0]) || '';
+    toast('Contact filled in');
+  } catch(err) { toast('Contacts were not shared'); }
 }
 
-/* ---------------- utils ---------------- */
-function copy(txt,msg){
-  if(navigator.clipboard?.writeText){
-    navigator.clipboard.writeText(txt).then(()=>toast(msg)).catch(()=>fallback(txt,msg));
-  } else fallback(txt,msg);
+function copy(txt, msg){
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(txt).then(()=>toast(msg)).catch(()=>fallbackCopy(txt,msg));
+  else fallbackCopy(txt, msg);
 }
-function fallback(txt,msg){
-  const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity=0;
+function fallbackCopy(txt, msg){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = 0;
   document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); toast(msg); }catch(e){ prompt('Copy this:', txt); }
+  try { document.execCommand('copy'); toast(msg); } catch(e) { prompt('Copy this:', txt); }
   ta.remove();
 }
-function exportData(){
-  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download=`r2r-desk-${iso(today())}.json`; a.click();
-  URL.revokeObjectURL(a.href); toast('Backup downloaded');
-}
-function importData(e){
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{ try{ DB=JSON.parse(r.result); save(); render(); toast('Backup restored'); }
-    catch(err){ toast('That file could not be read'); } };
-  r.readAsText(f); e.target.value='';
-}
-function wipe(){
-  if(!confirm('Erase all clients and receipts and reload the starting list?')) return;
-  seed(); render(); toast('Reset to the starting list');
-}
-document.querySelectorAll('.scrim').forEach(s=>s.addEventListener('click',ev=>{
-  if(ev.target===s) s.classList.remove('on');
-}));
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.scrim').forEach(s=>s.classList.remove('on')); });
 
-async function fillFromContact(){
-  try{
-    const [p] = await navigator.contacts.select(['name','email','tel'], {multiple:false});
-    if(!p) return;
-    document.getElementById('e-name').value  = (p.name&&p.name[0])||'';
-    document.getElementById('e-email').value = (p.email&&p.email[0])||'';
-    document.getElementById('e-phone').value = (p.tel&&p.tel[0])||'';
-    toast('Contact filled in');
-  }catch(err){ toast('Contacts were not shared'); }
-}
-
-/* ---------------- install + offline ---------------- */
-let deferredInstall=null;
-const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+/* --- install + offline --- */
+let deferredInstall = null;
+const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-window.addEventListener('beforeinstallprompt', e=>{
-  e.preventDefault(); deferredInstall=e; installHint();
-});
-window.addEventListener('appinstalled', ()=>{ deferredInstall=null; installHint(); toast('Installed'); });
-
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; if (route().v === 'setup') render(); });
+window.addEventListener('appinstalled', () => { deferredInstall = null; toast('Installed'); });
 function installHint(){
-  const hint=document.getElementById('install-hint');
-  const acts=document.getElementById('install-acts');
-  if(standalone){
-    hint.textContent='Already installed. You are running the app version.'; acts.style.display='none';
-  }else if(deferredInstall){
-    hint.textContent='Adds a Renewal Desk icon to your home screen. It then opens full screen and works without a signal.';
-    acts.style.display='flex';
-  }else if(isIOS){
-    hint.textContent='In Safari, tap the Share button, then Add to Home Screen. It then opens full screen and works without a signal. Chrome on iPhone cannot install it — use Safari.';
-    acts.style.display='none';
-  }else{
-    hint.textContent='Use your browser menu and choose Install app or Add to Home screen.';
-    acts.style.display='none';
-  }
+  if (standalone) return 'Installed. You are using the app version.';
+  if (deferredInstall) return 'Adds a Renewal Desk icon to your home screen. It opens full screen and works without a signal.';
+  if (isIOS) return 'In Safari, tap Share, then Add to Home Screen. Chrome on iPhone cannot install it, so use Safari.';
+  return 'Use your browser menu and choose Install app or Add to Home screen.';
 }
-async function doInstall(){
-  if(!deferredInstall) return;
-  deferredInstall.prompt();
-  await deferredInstall.userChoice;
-  deferredInstall=null; installHint();
-}
-
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').then(reg=>{
-      reg.addEventListener('updatefound', ()=>{
-        const w=reg.installing;
-        w && w.addEventListener('statechange', ()=>{
-          if(w.state==='installed' && navigator.serviceWorker.controller) toast('Update ready — reopen the app');
-        });
-      });
+async function doInstall(){ if (!deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; render(); }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => { const w = reg.installing;
+        w && w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) toast('Update ready. Close and reopen the app.'); }); });
     }).catch(()=>{});
   });
 }
 
-load(); render(); contactsHint(); installHint();
-document.getElementById('feed-url').textContent = feedUrl();
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); closeInvoice(); menu(false); } });
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0,0); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(true); });
 
-const startView=new URLSearchParams(location.search).get('v');
-if(['ledger','clients','receipts','settings'].includes(startView)) go(startView);
+/* ================= start ================= */
+load();
+render();
+pull(true);
+(function(){                      // links from the digest email: ?pay=<client id>
+  const p = new URLSearchParams(location.search).get('pay');
+  if (p && byId(p)) { location.hash = '#client/' + p; setTimeout(()=>openPay(p), 300); }
+})();
 </script>
 </body>
 </html>
