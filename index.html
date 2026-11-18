@@ -791,7 +791,7 @@ function vForm(id){
   return `${editing ? `<a class="pill-btn" href="#client/${c.id}" style="margin-bottom:16px">← Back</a>` : ''}
   <div class="pg-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
     <div style="min-width:0"><div class="pg-kicker">${editing ? 'Edit client' : 'Fill this once'}</div><div class="pg-big">${editing ? esc(c.name) : 'New client'}</div></div>
-    ${!editing && canPick ? `<button class="pill-btn" onclick="fromContacts()">From contacts</button>` : ''}
+    ${canPick ? `<button class="pill-btn" onclick="fromContacts(${editing})">From contacts</button>` : ''}
   </div>
   <form class="cardx pad form" id="cform" onsubmit="saveClient(event,'${id||''}')">
     <div class="fld"><label for="f-name">Name</label><input id="f-name" required autocomplete="name" value="${esc(v.name)}" placeholder="Full name"></div>
@@ -1098,14 +1098,15 @@ function downloadIcs(){
 
 /* --- contacts (Chrome on Android) --- */
 const canPick = ('contacts' in navigator) && ('ContactsManager' in window);
-async function fromContacts(){
+async function fromContacts(editing){
   try {
     const [p] = await navigator.contacts.select(['name','email','tel'], { multiple:false });
     if (!p) return;
-    document.getElementById('f-name').value = (p.name && p.name[0]) || '';
-    document.getElementById('f-email').value = (p.email && p.email[0]) || '';
-    document.getElementById('f-phone').value = (p.tel && p.tel[0]) || '';
-    toast('Contact filled in');
+    const set = (id, v) => { const el = document.getElementById(id); if (v && !(editing && id === 'f-name')) el.value = v; };
+    set('f-name', p.name && p.name[0]);
+    set('f-email', p.email && p.email[0]);
+    set('f-phone', p.tel && p.tel[0]);
+    toast(editing ? 'Number and email filled in · tap Save changes' : 'Contact filled in');
   } catch(err) { toast('Contacts were not shared'); }
 }
 
