@@ -541,7 +541,7 @@ async function pull(silent){
     const res = await fetch(`${S.conn.url}?a=get&key=${encodeURIComponent(S.conn.key)}`);
     const j = await res.json();
     if (!j.ok) throw new Error(j.error);
-    S.db = R2R.normalize(j.db); S.synced = new Date(); persist(); render();
+    S.db = R2R.normalize(j.db); S.synced = new Date(); persist(); softRender();
   } catch(e) { if (!silent) toast('Could not reach the autopilot. Showing the copy on this phone.'); renderSync(); }
 }
 async function act(op, args, okMsg){
@@ -594,6 +594,12 @@ function render(){
   renderSync();
   const tb = document.getElementById('theme-btn');
   tb.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? 'Light mode' : 'Dark mode';
+}
+/* a background refresh must never wipe a form you are filling in (e.g. after the contacts picker or switching apps) */
+function softRender(){
+  const busyForm = ['add','edit','setup'].includes(route().v) || document.getElementById('sheet').classList.contains('on')
+    || document.getElementById('inv-wrap').classList.contains('on');
+  if (busyForm) renderSync(); else render();
 }
 function renderSync(){
   const n = document.getElementById('sync-note');
