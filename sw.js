@@ -1,6 +1,6 @@
 /* R2R Renewal Desk — offline shell.
    Bump CACHE when you change index.html, or phones will keep serving the old copy. */
-const CACHE = 'r2r-desk-v4';
+const CACHE = 'r2r-desk-v5';
 
 const SHELL = [
   './',
